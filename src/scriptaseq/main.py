@@ -2,7 +2,7 @@
 
 import sys
 
-from PyQt5.Qt import QUrl, QGuiApplication, QQmlApplicationEngine, QObject
+from PyQt5.Qt import QUrl, QGuiApplication, QQmlApplicationEngine
 from scriptaseq.internal.gui.qml_types.registration import register_qml_types
 from scriptaseq.subspace import SubspaceSettings, GridSettings
 from scriptaseq.geom import Rectangle

@@ -2,6 +2,7 @@
 
 from scriptaseq.color import RGBAColor
 from scriptaseq.geom import Rectangle
+from PyQt5.Qt import QMatrix4x4
 
 # Default zoom settings.
 DEFAULT_ZOOM = (32, 32)
@@ -58,3 +59,9 @@ class SubspaceSettings:
     self.grid_settings = grid_settings
     self.zoom_settings = zoom_settings
     self.markers = list(markers)
+  
+  def make_zoom_matrix(self):
+    """Returns a matrix representing the zoom scaling for converting from space units to pixels."""
+    matrix = QMatrix4x4()
+    matrix.scale(*self.zoom_settings)
+    return matrix
