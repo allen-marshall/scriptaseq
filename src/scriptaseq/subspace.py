@@ -1,14 +1,15 @@
 """Functionality related to management of subspace settings in a Sequence Node"""
 
 from scriptaseq.color import RGBAColor
+from scriptaseq.geom import Rectangle
 
 # Default zoom settings.
-DEFAULT_ZOOM = (1/32, 1/32)
+DEFAULT_ZOOM = (32, 32)
 
 class GridSettings:
   """Contains settings related to background grid display and snapping."""
   
-  def __init__(self, first_cell, snap_settings, line_display_settings):
+  def __init__(self, first_cell=Rectangle(0, 0, 1, 1), snap_settings=(True, True), line_display_settings=(True, True)):
     """Constructor
     first_cell -- A rectangle representing the shape and location of the first cell. Other cells will repeat relative to
       that cell. Basically defines the origin of the grid along with the width and height of each cell.
@@ -43,20 +44,17 @@ class SpaceMarker:
 class SubspaceSettings:
   """Contains the settings needed for displaying a subspace in the timeline editor."""
   
-  def __init__(self, boundary, grid_settings, zoom_settings=DEFAULT_ZOOM, markers=[], show_diags=False):
+  def __init__(self, boundary, grid_settings, zoom_settings=DEFAULT_ZOOM, markers=[]):
     """Constructor
     boundary -- Rectangle giving the spatial boundaries of the subspace. Child line segments contained in the subspace
       are required to fit inside this rectangle.
     grid_settings -- GridSettings object giving the settings for the background grid when displaying this subspace in
       the timeline editor.
-    zoom_settings -- 2-tuple containing horizontal and vertical zoom factors, respectively. Values should be in space
-      units per pixel.
+    zoom_settings -- 2-tuple containing horizontal and vertical zoom factors, respectively. Values should be in pixels
+      per space unit.
     markers -- Iterable of SpaceMarker objects indicating what markers to show in the subspace.
-    show_diags -- Boolean indicating whether to show the rectangle diagonals. A value of true may be useful for editing
-      automation lines. Default value is false.
     """
     self.boundary = boundary
     self.grid_settings = grid_settings
     self.zoom_settings = zoom_settings
     self.markers = list(markers)
-    self.show_diags = show_diags

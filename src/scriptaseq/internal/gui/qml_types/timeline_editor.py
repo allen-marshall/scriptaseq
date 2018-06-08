@@ -1,9 +1,10 @@
 """QML types for use in the timeline editor"""
 
 from PyQt5.QtQuick import QQuickItem, QSGGeometry, QSGNode
-from scriptaseq.internal.gui.qt_util import make_or_reuse_geom_node, make_or_reuse_geom, make_or_reuse_flat_mat,\
+
+from scriptaseq.internal.gui.qt_util import make_or_reuse_geom_node, make_or_reuse_geom, make_or_reuse_flat_mat, \
   make_qcolor
-from PyQt5.Qt import QColor
+
 
 class TimelineGrid(QQuickItem):
   """Displays the grid in the timeline editor."""
