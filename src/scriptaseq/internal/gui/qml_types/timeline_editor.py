@@ -17,6 +17,10 @@ class TimelineGrid(QQuickItem):
     self.seq_node = seq_node
     self.setFlag(QQuickItem.ItemHasContents)
     
+    # Variables to keep track of previous settings so we don't update unnecessarily.
+    self.prev_zoom = None
+    self.prev_grid_settings = None
+    
     # These will be initialized in the first paint update, and reused after that.
     self.qsg_transform = None
     self.qsg_node = None
@@ -38,35 +42,38 @@ class TimelineGrid(QQuickItem):
       self.qsg_mat.setColor(make_qcolor(1, 1, 1, 0.5))
       self.qsg_node.setMaterial(self.qsg_mat)
     
-    # Compute zoom transform.
-    # TODO: Should skip if the zoom settings have not changed.
-    self.qsg_transform.setMatrix(self.seq_node.subspace.make_zoom_matrix())
+    # Compute zoom transform if zoom has changed.
+    if self.prev_zoom is None or self.prev_zoom != self.seq_node.subspace.zoom_settings:
+      self.qsg_transform.setMatrix(self.seq_node.subspace.make_zoom_matrix())
+      self.prev_zoom = self.seq_node.subspace.zoom_settings
     
-    # Compute grid lines.
-    # TODO: Should skip if the grid settings have not changed.
-    lines = []
-    if self.seq_node is not None:
-      if self.seq_node.subspace.grid_settings.line_display_settings[0]:
-        lines += self._build_h_lines()
-      if self.seq_node.subspace.grid_settings.line_display_settings[1]:
-        lines += self._build_v_lines()
-    
-    # Allocate geometry space.
-    if self.qsg_geom is None:
-      self.qsg_geom = QSGGeometry(QSGGeometry.defaultAttributes_Point2D(), len(lines) * 2)
-      self.qsg_geom.setDrawingMode(QSGGeometry.DrawLines)
-      # TODO: Maybe don't hard-code the line width.
-      self.qsg_geom.setLineWidth(1)
-      self.qsg_node.setGeometry(self.qsg_geom)
-    else:
-      self.qsg_geom.allocate(len(lines) * 2)
-    
-    # Build geometry.
-    vertices = self.qsg_geom.vertexDataAsPoint2D()
-    for idx, line in enumerate(lines):
-      vertices[idx * 2].set(*line[0])
-      vertices[idx * 2 + 1].set(*line[1])
-    self.qsg_node.markDirty(QSGNode.DirtyGeometry)
+    # Compute grid lines if grid has changed.
+    if self.prev_grid_settings is None or self.prev_grid_settings != self.seq_node.subspace.grid_settings:
+      lines = []
+      if self.seq_node is not None:
+        if self.seq_node.subspace.grid_settings.line_display_settings[0]:
+          lines += self._build_h_lines()
+        if self.seq_node.subspace.grid_settings.line_display_settings[1]:
+          lines += self._build_v_lines()
+      
+      # Allocate geometry space.
+      if self.qsg_geom is None:
+        self.qsg_geom = QSGGeometry(QSGGeometry.defaultAttributes_Point2D(), len(lines) * 2)
+        self.qsg_geom.setDrawingMode(QSGGeometry.DrawLines)
+        # TODO: Maybe don't hard-code the line width.
+        self.qsg_geom.setLineWidth(1)
+        self.qsg_node.setGeometry(self.qsg_geom)
+      else:
+        self.qsg_geom.allocate(len(lines) * 2)
+      
+      # Build geometry.
+      vertices = self.qsg_geom.vertexDataAsPoint2D()
+      for idx, line in enumerate(lines):
+        vertices[idx * 2].set(*line[0])
+        vertices[idx * 2 + 1].set(*line[1])
+      self.qsg_node.markDirty(QSGNode.DirtyGeometry)
+      
+      self.prev_grid_settings = self.seq_node.subspace.grid_settings
     
     return self.qsg_transform
   
