@@ -1,3 +1,10 @@
+# PyDev project files
+.project
+.pydevproject
+
+# Compiled Qt files
+*.qmlc
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
