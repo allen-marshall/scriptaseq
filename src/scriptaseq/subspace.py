@@ -21,6 +21,13 @@ class GridSettings:
     self.first_cell = first_cell
     self.snap_settings = snap_settings
     self.line_display_settings = line_display_settings
+  
+  def __eq__(self, other):
+    return \
+      isinstance(other, self.__class__) \
+      and self.first_cell == other.first_cell \
+      and self.snap_settings == other.snap_settings \
+      and self.line_display_settings == other.line_display_settings
 
 class SpaceMarker:
   """Represents a line marker to be shown at certain locations in a subspace."""
@@ -41,6 +48,14 @@ class SpaceMarker:
     self.repeat_dist = repeat_dist
     self.color = color
     self.label = label
+  
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) \
+      and self.is_horizontal == other.is_horizontal \
+      and self.marked_value == other.marked_value \
+      and self.repeat_dist == other.repeat_dist \
+      and self.color == other.color \
+      and self.label == other.label
 
 class SubspaceSettings:
   """Contains the settings needed for displaying a subspace in the timeline editor."""
@@ -65,3 +80,10 @@ class SubspaceSettings:
     matrix = QMatrix4x4()
     matrix.scale(*self.zoom_settings)
     return matrix
+  
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) \
+      and self.boundary == other.boundary \
+      and self.grid_settings == other.grid_settings \
+      and self.zoom_settings == other.zoom_settings \
+      and self.markers == other.markers

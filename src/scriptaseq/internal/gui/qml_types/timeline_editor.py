@@ -2,6 +2,7 @@
 
 from PyQt5.Qt import QSGGeometryNode, QSGFlatColorMaterial, QSGTransformNode
 from PyQt5.QtQuick import QQuickItem, QSGGeometry, QSGNode
+import copy
 
 from scriptaseq.internal.gui.qt_util import make_qcolor
 
@@ -45,7 +46,7 @@ class TimelineGrid(QQuickItem):
     # Compute zoom transform if zoom has changed.
     if self.prev_zoom is None or self.prev_zoom != self.seq_node.subspace.zoom_settings:
       self.qsg_transform.setMatrix(self.seq_node.subspace.make_zoom_matrix())
-      self.prev_zoom = self.seq_node.subspace.zoom_settings
+      self.prev_zoom = copy.deepcopy(self.seq_node.subspace.zoom_settings)
     
     # Compute grid lines if grid has changed.
     if self.prev_grid_settings is None or self.prev_grid_settings != self.seq_node.subspace.grid_settings:
@@ -73,7 +74,7 @@ class TimelineGrid(QQuickItem):
         vertices[idx * 2 + 1].set(*line[1])
       self.qsg_node.markDirty(QSGNode.DirtyGeometry)
       
-      self.prev_grid_settings = self.seq_node.subspace.grid_settings
+      self.prev_grid_settings = copy.deepcopy(self.seq_node.subspace.grid_settings)
     
     return self.qsg_transform
   

@@ -14,3 +14,10 @@ class RGBAColor:
     self.green = green
     self.blue = blue
     self.alpha = alpha
+  
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) \
+      and self.red == other.red \
+      and self.green == other.green \
+      and self.blue == other.blue \
+      and self.alpha == other.alpha
