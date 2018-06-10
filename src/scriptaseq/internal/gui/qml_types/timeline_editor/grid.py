@@ -10,11 +10,12 @@ from scriptaseq.internal.gui.qt_util import make_qcolor
 class TimelineGrid(QQuickItem):
   """Displays the grid in the timeline editor."""
   
-  def __init__(self, seq_node=None):
+  def __init__(self, parent=None, seq_node=None):
     """Constructor
+    parent -- The parent Qt Quick item.
     seq_node -- The Sequence Node currently being edited in the timeline editor.
     """
-    super().__init__()
+    super().__init__(parent)
     self.seq_node = seq_node
     self.setFlag(QQuickItem.ItemHasContents)
     

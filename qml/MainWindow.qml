@@ -7,7 +7,16 @@ ApplicationWindow {
   title: "ScriptASeq"
   color: "#000000"
   
-  TimelineGrid {
-    objectName: "grid"
+  TimelineEditor {
+    objectName: "editor"
+    
+    Rectangle {
+      objectName: "bgRect"
+      color: "#000040"
+    }
+    
+    TimelineGrid {
+      objectName: "grid"
+    }
   }
 }

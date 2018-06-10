@@ -1,19 +1,20 @@
 """ScriptASeq launcher script"""
 
+from PyQt5.Qt import QUrl, QGuiApplication, QQmlApplicationEngine, QTimer
 import sys
 
-from PyQt5.Qt import QUrl, QGuiApplication, QQmlApplicationEngine, QTimer
-from scriptaseq.internal.gui.qml_types.registration import register_qml_types
-from scriptaseq.subspace import SubspaceSettings, GridSettings
 from scriptaseq.geom import Rectangle
+from scriptaseq.internal.gui.qml_types.registration import register_qml_types
+from scriptaseq.internal.gui.qml_types.timeline_editor.editor import TimelineEditor
 from scriptaseq.seq_node import SeqNode
-from scriptaseq.internal.gui.qml_types.timeline_editor import TimelineGrid
+from scriptaseq.subspace import SubspaceSettings, GridSettings
+
 
 if __name__ == '__main__':
-
-  qt_app = QGuiApplication(sys.argv)
   
   register_qml_types()
+
+  qt_app = QGuiApplication(sys.argv)
   
   # Extract main window from QML file.
   qml_app_engine = QQmlApplicationEngine()
@@ -27,20 +28,20 @@ if __name__ == '__main__':
   test_node = SeqNode('test', subspace)
   
   # Pass the Sequence Node information to the GUI.
-  timeline_grid = main_window.findChild(TimelineGrid, 'grid')
-  timeline_grid.seq_node = test_node
-  
+  timeline_editor = main_window.findChild(TimelineEditor, 'editor')
+  timeline_editor.seq_node = test_node
+   
   # Show the main window.
   main_window.showMaximized()
-  
+   
   # Test ability to detect changes.
   def test_change_0():
     test_node.subspace.zoom_settings = (64, 32)
-    timeline_grid.update()
+    timeline_editor.update()
   QTimer.singleShot(2000, test_change_0)
   def test_change_1():
     test_node.subspace.grid_settings = GridSettings(Rectangle(0.5, 0.5, 2, 2), (False, False), (True, False))
-    timeline_grid.update()
+    timeline_editor.update()
   QTimer.singleShot(4000, test_change_1)
   
   sys.exit(qt_app.exec_())
