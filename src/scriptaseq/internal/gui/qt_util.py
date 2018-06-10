@@ -13,11 +13,11 @@ def make_qcolor(red=0, green=0, blue=0, alpha=1):
   return QColor(*scaled_comps)
 
 def fit_item_to_region(item, region):
-  """Fits a Qt Quick item to the specified region by modifying its position and dimensions.
+  """Fits a Qt Quick item to the specified region by modifying its position and implicit dimensions.
   item -- The Qt Quick item to fit. Nothing is done if this is None.
   region -- Rectangle object specifying the desired region, in units of pixels relative to the item's parent.
   """
   item.setProperty('x', region.x)
   item.setProperty('y', region.y)
-  item.setProperty('width', region.width)
-  item.setProperty('height', region.height)
+  item.setProperty('implicitWidth', region.width)
+  item.setProperty('implicitHeight', region.height)

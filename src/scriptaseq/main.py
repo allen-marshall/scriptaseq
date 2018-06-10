@@ -28,7 +28,7 @@ if __name__ == '__main__':
   test_node = SeqNode('test', subspace)
   
   # Pass the Sequence Node information to the GUI.
-  timeline_editor = main_window.findChild(TimelineEditor, 'editor')
+  timeline_editor = main_window.findChild(TimelineEditor, 'timelineEditor')
   timeline_editor.seq_node = test_node
    
   # Show the main window.
