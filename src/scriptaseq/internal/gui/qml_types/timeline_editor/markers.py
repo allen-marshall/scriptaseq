@@ -74,6 +74,13 @@ class TimelineMarkers(QQuickItem):
         self._marker_text_v.setProperty('text', '; '.join([marker.label for marker in close_markers_v]))
         self._marker_text_v.setX(mouse_pos_px.x())
   
+  def hoverLeaveEvent(self, event):
+    super().hoverLeaveEvent(event)
+    if self._marker_text_h is not None and self._marker_text_v is not None:
+      # Make marker labels invisible when the mouse leaves the editing region.
+      self._marker_text_h.setProperty('visible', False)
+      self._marker_text_v.setProperty('visible', False)
+  
   def updatePaintNode(self, old_node, update_data):
     # Only update if we have a Sequence Node.
     if self.seq_node is None:
