@@ -31,6 +31,10 @@ ApplicationWindow {
           TimelineGrid {
             objectName: "grid"
           }
+          
+          TimelineMarkers {
+            objectName: "markers"
+          }
         }
       }
     }

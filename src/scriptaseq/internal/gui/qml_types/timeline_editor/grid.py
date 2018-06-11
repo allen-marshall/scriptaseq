@@ -1,4 +1,4 @@
-"""QML types for use in the timeline editor"""
+"""QML types for display of the grid in the timeline editor"""
 
 from PyQt5.Qt import QSGGeometryNode, QSGFlatColorMaterial, QSGTransformNode
 from PyQt5.QtQuick import QQuickItem, QSGGeometry, QSGNode
@@ -30,6 +30,10 @@ class TimelineGrid(QQuickItem):
     self.qsg_mat = None
   
   def updatePaintNode(self, old_node, update_data):
+    # Only update if we have a Sequence Node.
+    if self.seq_node is None:
+      return old_node
+    
     # Initialize QSG objects.
     if self.qsg_transform is None:
       self.qsg_transform = QSGTransformNode()
@@ -52,11 +56,10 @@ class TimelineGrid(QQuickItem):
     # Compute grid lines if grid has changed.
     if self.prev_grid_settings is None or self.prev_grid_settings != self.seq_node.subspace.grid_settings:
       lines = []
-      if self.seq_node is not None:
-        if self.seq_node.subspace.grid_settings.line_display_settings[0]:
-          lines += self._build_h_lines()
-        if self.seq_node.subspace.grid_settings.line_display_settings[1]:
-          lines += self._build_v_lines()
+      if self.seq_node.subspace.grid_settings.line_display_settings[0]:
+        lines += self._build_h_lines()
+      if self.seq_node.subspace.grid_settings.line_display_settings[1]:
+        lines += self._build_v_lines()
       
       # Allocate geometry space.
       if self.qsg_geom is None:
@@ -85,6 +88,7 @@ class TimelineGrid(QQuickItem):
     # Find where to start and stop.
     grid_y_start = self.seq_node.subspace.grid_settings.first_cell.y
     bound_y_start = self.seq_node.subspace.boundary.y
+    bound_height = self.seq_node.subspace.boundary.height
     y_delta = self.seq_node.subspace.grid_settings.first_cell.height
     y_start = (grid_y_start - bound_y_start) % y_delta
     y_end = self.seq_node.subspace.boundary.height
@@ -95,7 +99,7 @@ class TimelineGrid(QQuickItem):
     lines = []
     y_curr = y_start
     while y_curr <= y_end:
-      lines.append(((x_start, y_curr), (x_end, y_curr)))
+      lines.append(((x_start, bound_height - y_curr), (x_end, bound_height - y_curr)))
       y_curr += y_delta
     
     return lines

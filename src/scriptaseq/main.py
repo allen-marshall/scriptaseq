@@ -7,7 +7,8 @@ from scriptaseq.geom import Rectangle
 from scriptaseq.internal.gui.qml_types.registration import register_qml_types
 from scriptaseq.internal.gui.qml_types.timeline_editor.editor import TimelineEditor
 from scriptaseq.seq_node import SeqNode
-from scriptaseq.subspace import SubspaceSettings, GridSettings
+from scriptaseq.subspace import SubspaceSettings, GridSettings, SpaceMarker
+from scriptaseq.color import RGBAColor
 
 
 if __name__ == '__main__':
@@ -24,7 +25,9 @@ if __name__ == '__main__':
   # Create an example Sequence Node for testing the GUI functionality.
   boundary = Rectangle(0, 0, 10, 10)
   grid_settings = GridSettings(Rectangle(0, 0, 1, 1))
-  subspace = SubspaceSettings(boundary, grid_settings)
+  markers = [SpaceMarker(True, 0, 1, RGBAColor(1, 0.25, 0, 0.5), 'unit'),
+             SpaceMarker(False, 0, 2, RGBAColor(0, 1, 0, 0.4), 'double unit')]
+  subspace = SubspaceSettings(boundary, grid_settings, markers=markers)
   test_node = SeqNode('test', subspace)
   
   # Pass the Sequence Node information to the GUI.

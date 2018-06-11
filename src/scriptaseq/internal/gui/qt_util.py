@@ -17,7 +17,8 @@ def fit_item_to_region(item, region):
   item -- The Qt Quick item to fit. Nothing is done if this is None.
   region -- Rectangle object specifying the desired region, in units of pixels relative to the item's parent.
   """
-  item.setProperty('x', region.x)
-  item.setProperty('y', region.y)
-  item.setProperty('implicitWidth', region.width)
-  item.setProperty('implicitHeight', region.height)
+  if item is not None:
+    item.setProperty('x', region.x)
+    item.setProperty('y', region.y)
+    item.setProperty('implicitWidth', region.width)
+    item.setProperty('implicitHeight', region.height)
