@@ -49,6 +49,21 @@ class SpaceMarker:
     self.color = color
     self.label = label
   
+  def dist_from(self, point):
+    """Computes the smallest distance between the marker and the specified point.
+    point -- A 2-tuple of coordinates indicating the query point.
+    """
+    coord_idx = 1 if self.is_horizontal else 0
+    
+    # Handle case where the marker doesn't repeat.
+    if self.repeat_dist is None:
+      return abs(point[coord_idx] - self.marked_value)
+    
+    # Handle case where the marker repeats.
+    else:
+      offset = (point[coord_idx] - self.marked_value) % self.repeat_dist
+      return min(abs(offset), abs(self.repeat_dist - offset))
+  
   def __eq__(self, other):
     return isinstance(other, self.__class__) \
       and self.is_horizontal == other.is_horizontal \
