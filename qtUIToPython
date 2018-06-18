@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+for filename in ./qt_ui/*.ui; do
+  pyuic5 $filename -o "./src/scriptaseq/internal/generated/qt_ui/$(basename $filename .ui).py"
+done
