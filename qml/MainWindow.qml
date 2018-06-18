@@ -3,6 +3,7 @@ import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
 
 import ScriptASeq 0.1
+import "."
 
 ApplicationWindow {
   title: "ScriptASeq"
@@ -22,35 +23,6 @@ ApplicationWindow {
         
         TimelineEditor {
           objectName: "timelineEditor"
-    
-          Rectangle {
-            objectName: "bgRect"
-            color: "#000040"
-          }
-    
-          TimelineGrid {
-            objectName: "grid"
-          }
-          
-          TimelineMarkers {
-            objectName: "markers"
-            
-            Text {
-              objectName: "markerTextH"
-              visible: false
-              color: "#ffff88"
-              font.pointSize: 12
-              x: 0
-            }
-            
-            Text {
-              objectName: "markerTextV"
-              visible: false
-              color: "#ffff88"
-              font.pointSize: 12
-              y: 0
-            }
-          }
         }
       }
     }
