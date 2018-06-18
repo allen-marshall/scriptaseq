@@ -18,6 +18,6 @@ def _register_type(py_type, qml_type):
 
 def register_qml_types():
   """Registers the ScriptASeq QML library with Qt."""
-  _register_type(TimelineGrid, 'TimelineGrid')
-  _register_type(TimelineMarkers, 'TimelineMarkers')
-  _register_type(TimelineEditor, 'TimelineEditor')
+  _register_type(TimelineGrid, 'PyTimelineGrid')
+  _register_type(TimelineMarkers, 'PyTimelineMarkers')
+  _register_type(TimelineEditor, 'PyTimelineEditor')

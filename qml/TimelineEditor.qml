@@ -2,18 +2,18 @@ import QtQuick 2.10
 
 import ScriptASeq 0.1
         
-TimelineEditor {
+PyTimelineEditor {
     
   Rectangle {
     objectName: "bgRect"
     color: "#000040"
   }
     
-  TimelineGrid {
+  PyTimelineGrid {
     objectName: "grid"
   }
           
-  TimelineMarkers {
+  PyTimelineMarkers {
     objectName: "markers"
     
     Text {
