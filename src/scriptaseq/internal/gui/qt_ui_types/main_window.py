@@ -31,6 +31,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     self.actionUndo.triggered.connect(self._undo_stack.createUndoAction(self).trigger)
     self.actionRedo.triggered.connect(self._undo_stack.createRedoAction(self).trigger)
     
+    self._undo_stack.canRedoChanged.connect(self._set_can_redo)
+    self._undo_stack.canUndoChanged.connect(self._set_can_undo)
+    self._undo_stack.cleanChanged.connect(self._set_undo_stack_clean)
+    
     # Create default project.
     # TODO: Support opening a project file on startup.
     # TODO: The default project should be more generic/empty. It is currently nonempty for testing purposes.
@@ -48,6 +52,25 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     
     # Route undo commands from GUI components to the application undo stack.
     self._timeline_props_editor.undo_command_started.connect(self._push_undo_command)
+  
+  def _set_can_redo(self, can_redo):
+    """Called when the status of whether we have an action to redo changes.
+    can_redo -- Boolean indicating whether we can currently redo.
+    """
+    self.actionRedo.setEnabled(can_redo)
+  
+  def _set_can_undo(self, can_undo):
+    """Called when the status of whether we have an action to undo changes.
+    can_undo -- Boolean indicating whether we can currently undo.
+    """
+    self.actionUndo.setEnabled(can_undo)
+  
+  def _set_undo_stack_clean(self, is_clean):
+    """Called when the undo stack changes clean status.
+    is_clean -- Boolean indicating whether the undo stack is currently in a clean state.
+    """
+    # TODO: Probably add an asterisk to window title when not clean.
+    pass
   
   def _push_undo_command(self, command):
     """Pushes an undo command onto the undo stack

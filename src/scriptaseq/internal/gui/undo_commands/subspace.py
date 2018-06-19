@@ -1,10 +1,15 @@
 """Undo commands that alter the active Sequence Node's subspace settings"""
 
 import copy
+
+from scriptaseq.internal.gui.undo_commands.id_gen import gen_undo_id
 from scriptaseq.internal.gui.undo_commands.project_base import ProjectUndoCommand
+
 
 class SetBoundaryCommand(ProjectUndoCommand):
   """Undo command for modifying the boundary rectangle of the active Sequence Node's subspace"""
+  
+  _undo_id = gen_undo_id()
   
   def __init__(self, project_model, new_boundary):
     """Constructor
@@ -23,6 +28,9 @@ class SetBoundaryCommand(ProjectUndoCommand):
     for name in self.active_seq_node.clipped_child_names(new_boundary):
       self._clipped_children.append(self.active_seq_node.children[name])
   
+  def id(self):
+    return self.__class__._undo_id
+  
   def redo(self):
     for child in self._clipped_children:
       self.project_model.remove_child(child.name)
@@ -35,10 +43,15 @@ class SetBoundaryCommand(ProjectUndoCommand):
   
   def mergeWith(self, command):
     # Merge consecutive boundary edits to the same Sequence Node.
-    return isinstance(command, self.__class__) and command.active_seq_node is self.active_seq_node
+    should_merge = isinstance(command, self.__class__) and command.active_seq_node is self.active_seq_node
+    if should_merge:
+      self._new_boundary = command._new_boundary
+    return should_merge
 
 class SetGridCellCommand(ProjectUndoCommand):
   """Undo command for modifying the grid cell rectangle of the active Sequence Node's subspace"""
+  
+  _undo_id = gen_undo_id()
   
   def __init__(self, project_model, new_cell):
     """Constructor
@@ -52,6 +65,9 @@ class SetGridCellCommand(ProjectUndoCommand):
     
     self.setText('Grid cell change ({})'.format(self.active_seq_node.name))
   
+  def id(self):
+    return self.__class__._undo_id
+  
   def redo(self):
     self.project_model.grid_cell = self._new_cell
   
@@ -60,10 +76,15 @@ class SetGridCellCommand(ProjectUndoCommand):
   
   def mergeWith(self, command):
     # Merge consecutive grid cell edits to the same Sequence Node.
-    return isinstance(command, self.__class__) and command.active_seq_node is self.active_seq_node
+    should_merge = isinstance(command, self.__class__) and command.active_seq_node is self.active_seq_node
+    if should_merge:
+      self._new_cell = command._new_cell
+    return should_merge
 
 class SetGridSnapCommand(ProjectUndoCommand):
   """Undo command for modifying the grid snap settings of the active Sequence Node's subspace"""
+  
+  _undo_id = gen_undo_id()
   
   def __init__(self, project_model, new_snap):
     """Constructor
@@ -77,6 +98,9 @@ class SetGridSnapCommand(ProjectUndoCommand):
     
     self.setText('Grid snap change ({})'.format(self.active_seq_node.name))
   
+  def id(self):
+    return self.__class__._undo_id
+  
   def redo(self):
     self.project_model.grid_snap = self._new_snap
   
@@ -85,10 +109,15 @@ class SetGridSnapCommand(ProjectUndoCommand):
   
   def mergeWith(self, command):
     # Merge consecutive grid snap edits to the same Sequence Node.
-    return isinstance(command, self.__class__) and command.active_seq_node is self.active_seq_node
+    should_merge = isinstance(command, self.__class__) and command.active_seq_node is self.active_seq_node
+    if should_merge:
+      self._new_snap = command._new_snap
+    return should_merge
 
 class SetGridDisplayCommand(ProjectUndoCommand):
   """Undo command for modifying the grid line display settings of the active Sequence Node's subspace"""
+  
+  _undo_id = gen_undo_id()
   
   def __init__(self, project_model, new_display):
     """Constructor
@@ -102,6 +131,9 @@ class SetGridDisplayCommand(ProjectUndoCommand):
     
     self.setText('Grid line display change ({})'.format(self.active_seq_node.name))
   
+  def id(self):
+    return self.__class__._undo_id
+  
   def redo(self):
     self.project_model.grid_display = self._new_display
   
@@ -110,4 +142,7 @@ class SetGridDisplayCommand(ProjectUndoCommand):
   
   def mergeWith(self, command):
     # Merge consecutive grid display edits to the same Sequence Node.
-    return isinstance(command, self.__class__) and command.active_seq_node is self.active_seq_node
+    should_merge = isinstance(command, self.__class__) and command.active_seq_node is self.active_seq_node
+    if should_merge:
+      self._new_display = command._new_display
+    return should_merge
