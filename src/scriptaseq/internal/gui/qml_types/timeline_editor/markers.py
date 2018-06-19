@@ -26,6 +26,7 @@ class TimelineMarkers(QQuickItem):
     # Variables to keep track of previous settings so we don't update unnecessarily.
     self.prev_zoom = None
     self.prev_markers = None
+    self.prev_boundary = None
     
     # These will be initialized in the first paint update, and reused after that.
     self.qsg_node = None
@@ -95,8 +96,9 @@ class TimelineMarkers(QQuickItem):
       self.qsg_mat = QSGVertexColorMaterial()
       self.qsg_node.setMaterial(self.qsg_mat)
     
-    # Update marker lines if zoom or markers have changed.
-    if self.prev_zoom != self.seq_node.subspace.zoom_settings or self.prev_markers != self.seq_node.subspace.markers:
+    # Update marker lines if zoom, markers, or boundary have changed.
+    if self.prev_zoom != self.seq_node.subspace.zoom_settings or self.prev_markers != self.seq_node.subspace.markers \
+      or self.prev_boundary != self.seq_node.subspace.boundary:
       
       # Compute geometry.
       vertices = []
@@ -121,6 +123,7 @@ class TimelineMarkers(QQuickItem):
       
       self.prev_zoom = copy.deepcopy(self.seq_node.subspace.zoom_settings)
       self.prev_markers = copy.deepcopy(self.seq_node.subspace.markers)
+      self.prev_boundary = copy.deepcopy(self.seq_node.subspace.boundary)
     
     return self.qsg_node
   
@@ -167,6 +170,6 @@ class TimelineMarkers(QQuickItem):
       return [(left, vertical) + color_tuple, (right, vertical) + color_tuple]
     else:
       top = 0
-      bottom = boundary.width * zoom[1]
+      bottom = boundary.height * zoom[1]
       horizontal = (value - boundary.x) * zoom[0]
       return [(horizontal, top) + color_tuple, (horizontal, bottom) + color_tuple]

@@ -22,6 +22,7 @@ class TimelineGrid(QQuickItem):
     # Variables to keep track of previous settings so we don't update unnecessarily.
     self.prev_zoom = None
     self.prev_grid_settings = None
+    self.prev_boundary = None
     
     # These will be initialized in the first paint update, and reused after that.
     self.qsg_transform = None
@@ -53,8 +54,9 @@ class TimelineGrid(QQuickItem):
       self.qsg_transform.setMatrix(self.seq_node.subspace.make_zoom_matrix())
       self.prev_zoom = copy.deepcopy(self.seq_node.subspace.zoom_settings)
     
-    # Compute grid lines if grid has changed.
-    if self.prev_grid_settings is None or self.prev_grid_settings != self.seq_node.subspace.grid_settings:
+    # Compute grid lines if grid or boundary has changed.
+    if self.prev_grid_settings is None or self.prev_grid_settings != self.seq_node.subspace.grid_settings \
+      or self.prev_boundary is None or self.prev_boundary != self.seq_node.subspace.boundary:
       lines = []
       if self.seq_node.subspace.grid_settings.line_display_settings[0]:
         lines += self._build_h_lines()
@@ -77,8 +79,10 @@ class TimelineGrid(QQuickItem):
         vertices[idx * 2].set(*line[0])
         vertices[idx * 2 + 1].set(*line[1])
       self.qsg_node.markDirty(QSGNode.DirtyGeometry)
+      self.qsg_node.markDirty(QSGNode.DirtyMaterial)
       
       self.prev_grid_settings = copy.deepcopy(self.seq_node.subspace.grid_settings)
+      self.prev_boundary = copy.deepcopy(self.seq_node.subspace.boundary)
     
     return self.qsg_transform
   
@@ -110,7 +114,7 @@ class TimelineGrid(QQuickItem):
     bound_x_start = self.seq_node.subspace.boundary.x
     x_delta = self.seq_node.subspace.grid_settings.first_cell.width
     x_start = (grid_x_start - bound_x_start) % x_delta
-    x_end = self.seq_node.subspace.boundary.height
+    x_end = self.seq_node.subspace.boundary.width
     y_start = 0
     y_end = self.seq_node.subspace.boundary.height
     

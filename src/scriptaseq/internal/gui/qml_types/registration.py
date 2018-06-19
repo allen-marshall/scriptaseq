@@ -1,8 +1,9 @@
 from PyQt5.Qt import qmlRegisterType
 
-from scriptaseq.internal.gui.qml_types.timeline_editor.grid import TimelineGrid
 from scriptaseq.internal.gui.qml_types.timeline_editor.editor import TimelineEditor
+from scriptaseq.internal.gui.qml_types.timeline_editor.grid import TimelineGrid
 from scriptaseq.internal.gui.qml_types.timeline_editor.markers import TimelineMarkers
+
 
 # Settings for the ScriptASeq QML library.
 QML_LIB_NAME = 'ScriptASeq'

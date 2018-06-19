@@ -1,10 +1,11 @@
 """ScriptASeq launcher script"""
 
-from PyQt5.Qt import QApplication
+from PyQt5.QtWidgets import QApplication
 import sys
 
+from scriptaseq.internal.gui.qt_ui_types.main_window import MainWindow
 from scriptaseq.internal.gui.qml_types.registration import register_qml_types
-from scriptaseq.internal.gui.main_window import MainWindow
+
 
 if __name__ == '__main__':
   qt_app = QApplication(sys.argv)
