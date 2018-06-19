@@ -91,13 +91,13 @@ class SeqNode:
     data_attach -- List of DataAttachment objects containing the node's data attachments, if any.
     script_attach -- List of ScriptAttachment objects containing the node's script attachments, if any.
     parent -- Reference to parent node.
-    children -- Dictionary of (child name, child reference) entries indicating the node's initial set of children.
     """
     self._name = name
     self.subspace = subspace
     self.line_seg = line_seg
     self.data_attach = data_attach
     self.script_attach = script_attach
+    self.children = {}
     
     if parent is not None:
       parent.add_child(self)
@@ -145,6 +145,14 @@ class SeqNode:
     # Attach the child.
     child.parent = self
     self.children[child.name] = child
+  
+  def clipped_child_names(self, boundary):
+    """Gets the names of child nodes that would be clipped if the Sequence Node's boundary were changed as specified.
+    boundary -- The new boundary rectangle.
+    """
+    for name, child in self.children.items():
+      if not child.line_seg.is_in_rect(boundary):
+        yield name
   
   def sorted_children(self, key=lambda child : child.line_seg.start_x):
     """Returns a list of this node's direct children in sorted order.

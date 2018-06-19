@@ -23,7 +23,7 @@ class RectEditor(QWidget, Ui_RectEditor):
     
     self._rect = Rectangle(0, 0, 1, 1)
     
-    self._changed_from_code()
+    self.update_form()
   
   @pyqtProperty(Rectangle)
   def rect(self):
@@ -32,12 +32,10 @@ class RectEditor(QWidget, Ui_RectEditor):
   @rect.setter
   def rect(self, rect):
     self._rect = copy.deepcopy(rect)
-    self._changed_from_code()
+    self.update_form()
   
-  def _changed_from_code(self):
-    """Called when the rectangle has been changed through code.
-    Updates the GUI to match the rectangle's state.
-    """
+  def update_form(self):
+    """Updates the GUI to match the rectangle's current state."""
     self.xEdit.setProperty('text', str(float(self._rect.x)))
     self.yEdit.setProperty('text', str(float(self._rect.y)))
     self.widthEdit.setProperty('text', str(float(self._rect.width)))
@@ -61,6 +59,6 @@ class RectEditor(QWidget, Ui_RectEditor):
     
     # Update the GUI. For consistent presentation, we do this even if the editing succeeded, so that integers get
     # decimal points added.
-    self._changed_from_code()
+    self.update_form()
     
     self.rect_edited.emit()

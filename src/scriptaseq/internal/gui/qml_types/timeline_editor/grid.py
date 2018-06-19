@@ -1,22 +1,22 @@
 """QML types for display of the grid in the timeline editor"""
 
-from PyQt5.Qt import QSGGeometryNode, QSGFlatColorMaterial, QSGTransformNode
+from PyQt5.Qt import QSGGeometryNode, QSGFlatColorMaterial, QSGTransformNode, pyqtProperty
 from PyQt5.QtQuick import QQuickItem, QSGGeometry, QSGNode
 import copy
 
+from scriptaseq.internal.gui.project_model import ProjectModel
 from scriptaseq.internal.gui.qt_util import make_qcolor
 
 
 class TimelineGrid(QQuickItem):
   """Displays the grid in the timeline editor."""
   
-  def __init__(self, parent=None, seq_node=None):
+  def __init__(self, parent=None):
     """Constructor
     parent -- The parent Qt Quick item.
-    seq_node -- The Sequence Node currently being edited in the timeline editor.
+    project -- ProjectModel for the project currently being edited.
     """
     super().__init__(parent)
-    self.seq_node = seq_node
     self.setFlag(QQuickItem.ItemHasContents)
     
     # Variables to keep track of previous settings so we don't update unnecessarily.
@@ -29,10 +29,27 @@ class TimelineGrid(QQuickItem):
     self.qsg_node = None
     self.qsg_geom = None
     self.qsg_mat = None
+    
+    self._project = None
+  
+  @pyqtProperty(ProjectModel)
+  def project(self):
+    """The ProjectModel currently being edited"""
+    return self._project
+  
+  @project.setter
+  def project(self, project):
+    # Disconnect from previous project's signals, if any.
+    if self._project is not None:
+      self._project.grid_display_changed.disconnect(self.update)
+    self._project = project
+    # Connect to project's signals.
+    if project is not None:
+      project.grid_display_changed.connect(self.update)
   
   def updatePaintNode(self, old_node, update_data):
     # Only update if we have a Sequence Node.
-    if self.seq_node is None:
+    if self.project.active_seq_node is None:
       return old_node
     
     # Initialize QSG objects.
@@ -50,17 +67,18 @@ class TimelineGrid(QQuickItem):
       self.qsg_node.setMaterial(self.qsg_mat)
     
     # Compute zoom transform if zoom has changed.
-    if self.prev_zoom is None or self.prev_zoom != self.seq_node.subspace.zoom_settings:
-      self.qsg_transform.setMatrix(self.seq_node.subspace.make_zoom_matrix())
-      self.prev_zoom = copy.deepcopy(self.seq_node.subspace.zoom_settings)
+    if self.prev_zoom is None or self.prev_zoom != self.project.active_seq_node.subspace.zoom_settings:
+      self.qsg_transform.setMatrix(self.project.active_seq_node.subspace.make_zoom_matrix())
+      self.prev_zoom = copy.deepcopy(self.project.active_seq_node.subspace.zoom_settings)
     
     # Compute grid lines if grid or boundary has changed.
-    if self.prev_grid_settings is None or self.prev_grid_settings != self.seq_node.subspace.grid_settings \
-      or self.prev_boundary is None or self.prev_boundary != self.seq_node.subspace.boundary:
+    if self.prev_grid_settings is None \
+      or self.prev_grid_settings != self.project.active_seq_node.subspace.grid_settings \
+      or self.prev_boundary is None or self.prev_boundary != self.project.active_seq_node.subspace.boundary:
       lines = []
-      if self.seq_node.subspace.grid_settings.line_display_settings[0]:
+      if self.project.active_seq_node.subspace.grid_settings.line_display_settings[0]:
         lines += self._build_h_lines()
-      if self.seq_node.subspace.grid_settings.line_display_settings[1]:
+      if self.project.active_seq_node.subspace.grid_settings.line_display_settings[1]:
         lines += self._build_v_lines()
       
       # Allocate geometry space.
@@ -81,8 +99,8 @@ class TimelineGrid(QQuickItem):
       self.qsg_node.markDirty(QSGNode.DirtyGeometry)
       self.qsg_node.markDirty(QSGNode.DirtyMaterial)
       
-      self.prev_grid_settings = copy.deepcopy(self.seq_node.subspace.grid_settings)
-      self.prev_boundary = copy.deepcopy(self.seq_node.subspace.boundary)
+      self.prev_grid_settings = copy.deepcopy(self.project.active_seq_node.subspace.grid_settings)
+      self.prev_boundary = copy.deepcopy(self.project.active_seq_node.subspace.boundary)
     
     return self.qsg_transform
   
@@ -90,14 +108,14 @@ class TimelineGrid(QQuickItem):
   
   def _build_h_lines(self):
     # Find where to start and stop.
-    grid_y_start = self.seq_node.subspace.grid_settings.first_cell.y
-    bound_y_start = self.seq_node.subspace.boundary.y
-    bound_height = self.seq_node.subspace.boundary.height
-    y_delta = self.seq_node.subspace.grid_settings.first_cell.height
+    grid_y_start = self.project.active_seq_node.subspace.grid_settings.first_cell.y
+    bound_y_start = self.project.active_seq_node.subspace.boundary.y
+    bound_height = self.project.active_seq_node.subspace.boundary.height
+    y_delta = self.project.active_seq_node.subspace.grid_settings.first_cell.height
     y_start = (grid_y_start - bound_y_start) % y_delta
-    y_end = self.seq_node.subspace.boundary.height
+    y_end = self.project.active_seq_node.subspace.boundary.height
     x_start = 0
-    x_end = self.seq_node.subspace.boundary.width
+    x_end = self.project.active_seq_node.subspace.boundary.width
     
     # Generate the lines.
     lines = []
@@ -110,13 +128,13 @@ class TimelineGrid(QQuickItem):
   
   def _build_v_lines(self):
     # Find where to start and stop.
-    grid_x_start = self.seq_node.subspace.grid_settings.first_cell.x
-    bound_x_start = self.seq_node.subspace.boundary.x
-    x_delta = self.seq_node.subspace.grid_settings.first_cell.width
+    grid_x_start = self.project.active_seq_node.subspace.grid_settings.first_cell.x
+    bound_x_start = self.project.active_seq_node.subspace.boundary.x
+    x_delta = self.project.active_seq_node.subspace.grid_settings.first_cell.width
     x_start = (grid_x_start - bound_x_start) % x_delta
-    x_end = self.seq_node.subspace.boundary.width
+    x_end = self.project.active_seq_node.subspace.boundary.width
     y_start = 0
-    y_end = self.seq_node.subspace.boundary.height
+    y_end = self.project.active_seq_node.subspace.boundary.height
     
     # Generate the lines.
     lines = []

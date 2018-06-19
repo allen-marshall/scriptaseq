@@ -10,6 +10,7 @@ from scriptaseq.internal.gui.qml_types.timeline_editor.editor import TimelineEdi
 from scriptaseq.internal.gui.qt_ui_types.timeline_props_editor import TimelinePropsEditor
 from scriptaseq.seq_node import SeqNode
 from scriptaseq.subspace import GridSettings, SpaceMarker, SubspaceSettings
+from scriptaseq.internal.gui.project_model import ProjectModel
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -30,8 +31,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     self.actionUndo.triggered.connect(self._undo_stack.createUndoAction(self).trigger)
     self.actionRedo.triggered.connect(self._undo_stack.createRedoAction(self).trigger)
     
-    self._timeline_props_editor.props_edited.connect(self._timeline_props_edited)
-    
     # Create default project.
     # TODO: Support opening a project file on startup.
     # TODO: The default project should be more generic/empty. It is currently nonempty for testing purposes.
@@ -41,12 +40,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                SpaceMarker(False, 0, 2, RGBAColor(0, 1, 0, 0.4), 'double unit')]
     subspace = SubspaceSettings(boundary, grid_settings, markers=markers)
     self._project_root = SeqNode('test', subspace)
-    self._active_seq_node = self._project_root
+    self._project_model = ProjectModel(self._project_root)
     
-    # Provide project information to the GUI.
-    self._timeline_editor.seq_node = self._project_root
-    self._timeline_props_editor.seq_node = self._project_root
+    # Provide project information to the GUI components.
+    self._timeline_editor.project = self._project_model
+    self._timeline_props_editor.project = self._project_model
+    
+    # Route undo commands from GUI components to the application undo stack.
+    self._timeline_props_editor.undo_command_started.connect(self._push_undo_command)
   
-  def _timeline_props_edited(self):
-    """Called when timeline properties are modified through the Timeline Properties GUI editor."""
-    self._timeline_editor.update()
+  def _push_undo_command(self, command):
+    """Pushes an undo command onto the undo stack
+    command -- Undo command to push
+    """
+    self._undo_stack.push(command)

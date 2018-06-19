@@ -17,6 +17,13 @@ class LineSeg:
     self.end_x = end_x
     self.end_y = end_y
   
+  def is_in_rect(self, rect):
+    """Checks if this line segment is contained in the specified rectangle
+    rect -- The query rectangle
+    """
+    return rect.x <= self.start_x <= rect.x + rect.width and rect.x <= self.end_x <= rect.x + rect.width \
+      and rect.y <= self.start_y <= rect.y + rect.height and rect.y <= self.end_y <= rect.y + rect.height
+  
   def __eq__(self, other):
     return isinstance(other, self.__class__) \
       and self.start_x == other.start_x \

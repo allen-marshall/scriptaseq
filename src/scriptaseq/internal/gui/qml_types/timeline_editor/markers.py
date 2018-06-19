@@ -1,6 +1,8 @@
 """QML types for displaying markers on a timeline"""
-from PyQt5.Qt import QQuickItem, QSGGeometryNode, QSGNode, QSGGeometry, QSGVertexColorMaterial, QObject
+from PyQt5.Qt import QQuickItem, QSGGeometryNode, QSGNode, QSGGeometry, QSGVertexColorMaterial, QObject, pyqtProperty
 import copy
+
+from scriptaseq.internal.gui.project_model import ProjectModel
 
 
 # Number of pixels away from a marker that the mouse can be while still showing the marker's label.
@@ -9,13 +11,12 @@ LABEL_THRESHOLD_DIST_PX = 4
 class TimelineMarkers(QQuickItem):
   """Displays the timeline markers in the timeline editor"""
   
-  def __init__(self, parent=None, seq_node=None):
+  def __init__(self, parent=None):
     """Constructor
     parent -- The parent Qt Quick item.
-    seq_node -- The Sequence Node currently being edited in the timeline editor.
+    project -- ProjectModel for the project currently being edited.
     """
     super().__init__(parent)
-    self.seq_node = seq_node
     self.setFlag(QQuickItem.ItemHasContents)
     self.setAcceptHoverEvents(True)
     
@@ -32,6 +33,8 @@ class TimelineMarkers(QQuickItem):
     self.qsg_node = None
     self.qsg_geom = None
     self.qsg_mat = None
+    
+    self._project = None
   
   def _init_children(self):
     """Initializes child objects, if they have not been initialized.
@@ -42,16 +45,31 @@ class TimelineMarkers(QQuickItem):
     if self._marker_text_v is None:
       self._marker_text_v = self.findChild(QObject, 'markerTextV')
   
+  @pyqtProperty(ProjectModel)
+  def project(self):
+    """The ProjectModel currently being edited"""
+    return self._project
+  
+  @project.setter
+  def project(self, project):
+    # Disconnect from previous project's signals, if any.
+    if hasattr(self, '_project') and self._project is not None:
+      self._project.markers_display_changed.disconnect(self.update)
+    self._project = project
+    # Connect to project's signals.
+    if project is not None:
+      project.markers_display_changed.connect(self.update)
+  
   def update(self):
     self._init_children()
     super().update()
   
   def hoverMoveEvent(self, event):
     super().hoverMoveEvent(event)
-    if self.seq_node is not None and self._marker_text_h is not None and self._marker_text_v is not None:
+    if self.project is not None and self._marker_text_h is not None and self._marker_text_v is not None:
       # Find all markers that the mouse is close to.
-      zoom = self.seq_node.subspace.zoom_settings
-      boundary = self.seq_node.subspace.boundary
+      zoom = self.project.active_seq_node.subspace.zoom_settings
+      boundary = self.project.active_seq_node.subspace.boundary
       mouse_pos_px = event.pos()
       mouse_pos = (mouse_pos_px.x() / zoom[0], boundary.height + boundary.y - mouse_pos_px.y() / zoom[1])
       threshold_dists = [dist / zoom[idx] for idx, dist in
@@ -60,9 +78,9 @@ class TimelineMarkers(QQuickItem):
         dist = marker.dist_from(mouse_pos)
         threshold = threshold_dists[1 if marker.is_horizontal else 0]
         return dist <= threshold
-      close_markers_h = [marker for marker in self.seq_node.subspace.markers if
+      close_markers_h = [marker for marker in self.project.active_seq_node.subspace.markers if
         close_enough(marker) and marker.is_horizontal]
-      close_markers_v = [marker for marker in self.seq_node.subspace.markers if
+      close_markers_v = [marker for marker in self.project.active_seq_node.subspace.markers if
         close_enough(marker) and not marker.is_horizontal]
       
       # Update the marker label.
@@ -84,7 +102,7 @@ class TimelineMarkers(QQuickItem):
   
   def updatePaintNode(self, old_node, update_data):
     # Only update if we have a Sequence Node.
-    if self.seq_node is None:
+    if self.project is None:
       return old_node
     
     # Initialize QSG objects.
@@ -97,12 +115,13 @@ class TimelineMarkers(QQuickItem):
       self.qsg_node.setMaterial(self.qsg_mat)
     
     # Update marker lines if zoom, markers, or boundary have changed.
-    if self.prev_zoom != self.seq_node.subspace.zoom_settings or self.prev_markers != self.seq_node.subspace.markers \
-      or self.prev_boundary != self.seq_node.subspace.boundary:
+    if self.prev_zoom != self.project.active_seq_node.subspace.zoom_settings \
+      or self.prev_markers != self.project.active_seq_node.subspace.markers \
+      or self.prev_boundary != self.project.active_seq_node.subspace.boundary:
       
       # Compute geometry.
       vertices = []
-      for marker in self.seq_node.subspace.markers:
+      for marker in self.project.active_seq_node.subspace.markers:
         vertices += self._build_marker_vertices(marker)
       
       # Allocate geometry space.
@@ -121,9 +140,9 @@ class TimelineMarkers(QQuickItem):
         qsg_vertices[idx].set(*vertex[0:2], *[round(comp * 255) for comp in vertex[2:]])
       self.qsg_node.markDirty(QSGNode.DirtyGeometry)
       
-      self.prev_zoom = copy.deepcopy(self.seq_node.subspace.zoom_settings)
-      self.prev_markers = copy.deepcopy(self.seq_node.subspace.markers)
-      self.prev_boundary = copy.deepcopy(self.seq_node.subspace.boundary)
+      self.prev_zoom = copy.deepcopy(self.project.active_seq_node.subspace.zoom_settings)
+      self.prev_markers = copy.deepcopy(self.project.active_seq_node.subspace.markers)
+      self.prev_boundary = copy.deepcopy(self.project.active_seq_node.subspace.boundary)
     
     return self.qsg_node
   
@@ -133,7 +152,7 @@ class TimelineMarkers(QQuickItem):
       return self._build_marker_line(marker, marker.marked_value)
     
     # Find where to start and stop.
-    boundary = self.seq_node.subspace.boundary
+    boundary = self.project.active_seq_node.subspace.boundary
     first_value = marker.marked_value % marker.repeat_dist
     stop_value = boundary.height if marker.is_horizontal else boundary.width
     
@@ -148,7 +167,7 @@ class TimelineMarkers(QQuickItem):
   
   def _build_marker_line(self, marker, value):
     # Do nothing if the value is out of range.
-    boundary = self.seq_node.subspace.boundary
+    boundary = self.project.active_seq_node.subspace.boundary
     if marker.is_horizontal:
       if not (boundary.y <= value <= boundary.y + boundary.height):
         return []
@@ -160,7 +179,7 @@ class TimelineMarkers(QQuickItem):
     alpha = marker.color.alpha
     color_tuple = (marker.color.red * alpha, marker.color.green * alpha, marker.color.blue * alpha, alpha)
     
-    zoom = self.seq_node.subspace.zoom_settings
+    zoom = self.project.active_seq_node.subspace.zoom_settings
     if marker.is_horizontal:
       left = 0
       right = boundary.width * zoom[0]
