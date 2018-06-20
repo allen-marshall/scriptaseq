@@ -1,11 +1,12 @@
 """Widget class for timeline_props_editor"""
-from PyQt5.Qt import pyqtProperty, QWidget, pyqtSignal, QUndoCommand
+from PyQt5.Qt import pyqtProperty, QWidget, pyqtSignal, QUndoCommand, QMessageBox
 
 from scriptaseq.internal.generated.qt_ui.timeline_props_editor import Ui_TimelinePropsEditor
 from scriptaseq.internal.gui.qt_ui_types.rectangle_editor import RectEditor
 from scriptaseq.internal.gui.undo_commands.subspace import SetBoundaryCommand, SetGridCellCommand, SetGridSnapCommand, \
   SetGridDisplayCommand
 from scriptaseq.seq_node import SeqNode
+from scriptaseq.internal.gui.undo_commands.seq_node import SetActiveNameCommand
 
 
 class TimelinePropsEditor(QWidget, Ui_TimelinePropsEditor) :
@@ -27,6 +28,7 @@ class TimelinePropsEditor(QWidget, Ui_TimelinePropsEditor) :
     self.boundsPlaceholder.addWidget(self._boundary_editor)
     self.gridCellPlaceholder.addWidget(self._grid_cell_editor)
     
+    self.nameLineEdit.editingFinished.connect(self._name_edited)
     self._boundary_editor.rect_edited.connect(self._boundary_edited)
     self._grid_cell_editor.rect_edited.connect(self._grid_cell_edited)
     self.snapHCheckBox.clicked.connect(self._snap_edited)
@@ -57,6 +59,7 @@ class TimelinePropsEditor(QWidget, Ui_TimelinePropsEditor) :
   def update_form(self):
     """Updates values in the form to match the active Sequence Node's settings"""
     if self.project is not None:
+      self.nameLineEdit.setText(self.project.active_seq_node_name)
       self._boundary_editor.rect = self.project.subspace_boundary
       self._grid_cell_editor.rect = self.project.grid_cell
       grid_snap = self.project.grid_snap
@@ -69,6 +72,28 @@ class TimelinePropsEditor(QWidget, Ui_TimelinePropsEditor) :
   def _can_apply_edits(self):
     """Checks if this editor has the necessary pointers to apply changes made through the GUI."""
     return self.project is not None
+  
+  def _name_edited(self):
+    """Called when the active node's name is changed in the GUI."""
+    if self._can_apply_edits():
+      new_name = self.nameLineEdit.property('text')
+      
+      # Do nothing if the node already has the specified name.
+      if self.project.active_seq_node_name == new_name:
+        return
+      
+      # Make sure the parent node doesn't already have a child with the new name.
+      parent_node = self.project.active_seq_node.parent
+      if parent_node is not None and new_name in parent_node.children \
+        and parent_node.children[new_name] is not self.project.active_seq_node:
+        self.nameLineEdit.setText(self.project.active_seq_node_name)
+        err_dialog = QMessageBox(QMessageBox.Critical, 'Duplicate name',
+          "Parent node '{}' already has a child named '{}'".format(parent_node.name, new_name), QMessageBox.Ok, self)
+        err_dialog.exec()
+      
+      else:
+        command = SetActiveNameCommand(self.project, new_name)
+        self.undo_command_started.emit(command)
   
   def _boundary_edited(self):
     """Called when the timeline boundary is edited in the GUI."""

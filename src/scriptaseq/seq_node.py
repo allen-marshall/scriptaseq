@@ -99,6 +99,7 @@ class SeqNode:
     self.script_attach = script_attach
     self.children = {}
     
+    self.parent = parent
     if parent is not None:
       parent.add_child(self)
   
@@ -108,12 +109,13 @@ class SeqNode:
   
   @name.setter
   def name(self, name):
-    if self.parent is None:
+    parent = self.parent
+    if parent is None:
       self._name = name
     else:
-      self.parent.remove_child(self._name)
+      parent.remove_child(self._name)
       self._name = name
-      self.parent.add_child(self)
+      parent.add_child(self)
   
   def remove_child(self, child_name):
     """Removes the specified child node from this SeqNode.

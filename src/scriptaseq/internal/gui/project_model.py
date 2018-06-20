@@ -14,6 +14,9 @@ class ProjectModel(QObject):
   # Emitted when the active node is changed.
   active_seq_node_changed = pyqtSignal(SeqNode)
   
+  # Emitted when the active node's name is changed.
+  active_seq_node_name_changed = pyqtSignal(str)
+  
   # Emitted when the timeline boundary for the active node is changed.
   boundary_changed = pyqtSignal(Rectangle)
   
@@ -74,6 +77,7 @@ class ProjectModel(QObject):
     
     self.project_reloaded.connect(self.timeline_props_display_changed.emit)
     self.active_seq_node_changed.connect(self.timeline_props_display_changed.emit)
+    self.active_seq_node_name_changed.connect(self.timeline_props_display_changed.emit)
     self.boundary_changed.connect(self.timeline_props_display_changed.emit)
     self.grid_cell_changed.connect(self.timeline_props_display_changed.emit)
     self.snap_changed.connect(self.timeline_props_display_changed.emit)
@@ -103,6 +107,16 @@ class ProjectModel(QObject):
   def active_seq_node(self, active_seq_node):
     self._active_seq_node = active_seq_node
     self.active_seq_node_changed.emit(active_seq_node)
+  
+  @pyqtProperty(str)
+  def active_seq_node_name(self):
+    """Property representing the name of the active Sequence Node"""
+    return self.active_seq_node.name
+  
+  @active_seq_node_name.setter
+  def active_seq_node_name(self, active_seq_node_name):
+    self.active_seq_node.name = active_seq_node_name
+    self.active_seq_node_name_changed.emit(active_seq_node_name)
   
   @pyqtProperty(Rectangle)
   def subspace_boundary(self):

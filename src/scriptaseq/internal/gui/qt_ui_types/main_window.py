@@ -2,15 +2,16 @@
 
 from PyQt5.Qt import QUrl
 from PyQt5.QtWidgets import QMainWindow, QUndoStack
+import copy
 
 from scriptaseq.color import RGBAColor
 from scriptaseq.geom import Rectangle
 from scriptaseq.internal.generated.qt_ui.main_window import Ui_MainWindow
+from scriptaseq.internal.gui.project_model import ProjectModel
 from scriptaseq.internal.gui.qml_types.timeline_editor.editor import TimelineEditor
 from scriptaseq.internal.gui.qt_ui_types.timeline_props_editor import TimelinePropsEditor
 from scriptaseq.seq_node import SeqNode
 from scriptaseq.subspace import GridSettings, SpaceMarker, SubspaceSettings
-from scriptaseq.internal.gui.project_model import ProjectModel
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -44,7 +45,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                SpaceMarker(False, 0, 2, RGBAColor(0, 1, 0, 0.4), 'double unit')]
     subspace = SubspaceSettings(boundary, grid_settings, markers=markers)
     self._project_root = SeqNode('test', subspace)
+    child0 = SeqNode('child0', copy.deepcopy(subspace), parent=self._project_root)
+    SeqNode('child1', copy.deepcopy(subspace), parent=self._project_root)
     self._project_model = ProjectModel(self._project_root)
+    self._project_model.active_seq_node = child0
     
     # Provide project information to the GUI components.
     self._timeline_editor.project = self._project_model
