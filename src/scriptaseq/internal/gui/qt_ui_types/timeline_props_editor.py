@@ -29,10 +29,10 @@ class TimelinePropsEditor(QWidget, Ui_TimelinePropsEditor) :
     
     self._boundary_editor.rect_edited.connect(self._boundary_edited)
     self._grid_cell_editor.rect_edited.connect(self._grid_cell_edited)
-    self.snapHCheckBox.stateChanged.connect(self._snap_edited)
-    self.snapVCheckBox.stateChanged.connect(self._snap_edited)
-    self.showHCheckBox.stateChanged.connect(self._line_display_edited)
-    self.showVCheckBox.stateChanged.connect(self._line_display_edited)
+    self.snapHCheckBox.clicked.connect(self._snap_edited)
+    self.snapVCheckBox.clicked.connect(self._snap_edited)
+    self.showHCheckBox.clicked.connect(self._line_display_edited)
+    self.showVCheckBox.clicked.connect(self._line_display_edited)
     
     self._project = None
     
