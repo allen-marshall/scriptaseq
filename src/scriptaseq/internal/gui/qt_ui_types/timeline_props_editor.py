@@ -59,11 +59,11 @@ class TimelinePropsEditor(QWidget, Ui_TimelinePropsEditor) :
   def update_form(self):
     """Updates values in the form to match the active Sequence Node's settings"""
     if self.project is not None:
-      self.nameLineEdit.setText(self.project.active_seq_node_name)
-      self._boundary_editor.rect = self.project.subspace_boundary
-      self._grid_cell_editor.rect = self.project.grid_cell
-      grid_snap = self.project.grid_snap
-      grid_show = self.project.grid_display
+      self.nameLineEdit.setText(self.project.active_seq_node.name)
+      self._boundary_editor.rect = self.project.active_seq_node.subspace.boundary
+      self._grid_cell_editor.rect = self.project.active_seq_node.subspace.grid_settings.first_cell
+      grid_snap = self.project.active_seq_node.subspace.grid_settings.snap_settings
+      grid_show = self.project.active_seq_node.subspace.grid_settings.line_display_settings
       self.snapHCheckBox.setChecked(grid_snap[0])
       self.snapVCheckBox.setChecked(grid_snap[1])
       self.showHCheckBox.setChecked(grid_show[0])
@@ -79,14 +79,14 @@ class TimelinePropsEditor(QWidget, Ui_TimelinePropsEditor) :
       new_name = self.nameLineEdit.property('text')
       
       # Do nothing if the node already has the specified name.
-      if self.project.active_seq_node_name == new_name:
+      if self.project.active_seq_node.name == new_name:
         return
       
       # Make sure the parent node doesn't already have a child with the new name.
       parent_node = self.project.active_seq_node.parent
       if parent_node is not None and new_name in parent_node.children \
         and parent_node.children[new_name] is not self.project.active_seq_node:
-        self.nameLineEdit.setText(self.project.active_seq_node_name)
+        self.nameLineEdit.setText(self.project.active_seq_node.name)
         err_dialog = QMessageBox(QMessageBox.Critical, 'Duplicate name',
           "Parent node '{}' already has a child named '{}'".format(parent_node.name, new_name), QMessageBox.Ok, self)
         err_dialog.exec()

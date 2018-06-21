@@ -11,29 +11,31 @@ class ProjectModel(QObject):
   # Emitted when the project is swapped out or reloaded as a whole.
   project_reloaded = pyqtSignal(SeqNode)
   
-  # Emitted when the active node is changed.
+  # Emitted when the active Sequence Node is changed.
   active_seq_node_changed = pyqtSignal(SeqNode)
   
-  # Emitted when the active node's name is changed.
-  active_seq_node_name_changed = pyqtSignal(str)
+  # Emitted when a Sequence Node's name is changed.
+  node_name_changed = pyqtSignal(SeqNode, str)
   
-  # Emitted when the timeline boundary for the active node is changed.
-  boundary_changed = pyqtSignal(Rectangle)
+  # Emitted when the timeline boundary for a Sequence Node is changed.
+  boundary_changed = pyqtSignal(SeqNode, Rectangle)
   
-  # Emitted when the grid cell origin and/or dimensions for the active node are changed.
-  grid_cell_changed = pyqtSignal(Rectangle)
+  # Emitted when the grid cell origin and/or dimensions for a Sequence Node are changed.
+  grid_cell_changed = pyqtSignal(SeqNode, Rectangle)
   
-  # Emitted when grid snapping settings for the active node are changed.
-  snap_changed = pyqtSignal(tuple)
+  # Emitted when grid snapping settings for a Sequence Node are changed.
+  snap_changed = pyqtSignal(SeqNode, bool, bool)
   
-  # Emitted when grid line display settings for the active node are changed.
-  show_lines_changed = pyqtSignal(tuple)
+  # Emitted when grid line display settings for a Sequence Node are changed.
+  show_lines_changed = pyqtSignal(SeqNode, bool, bool)
   
-  # Emitted when a child node is added to the active node.
-  child_added = pyqtSignal(SeqNode)
+  # Emitted when a child node has been added to a parent node. The first argument is the parent, and the second is the
+  # child.
+  child_added = pyqtSignal(SeqNode, SeqNode)
   
-  # Emitted when a child node is removed from the active node.
-  child_removed = pyqtSignal(str)
+  # Emitted when a child node has been removed from a parent node. The first argument is the parent, and the second is
+  # the child.
+  child_removed = pyqtSignal(SeqNode, SeqNode)
   
   # Convenience signal emitted when a change has occurred that might affect the displaying of the grid in the timeline
   # editor.
@@ -77,7 +79,7 @@ class ProjectModel(QObject):
     
     self.project_reloaded.connect(self.timeline_props_display_changed.emit)
     self.active_seq_node_changed.connect(self.timeline_props_display_changed.emit)
-    self.active_seq_node_name_changed.connect(self.timeline_props_display_changed.emit)
+    self.node_name_changed.connect(self.timeline_props_display_changed.emit)
     self.boundary_changed.connect(self.timeline_props_display_changed.emit)
     self.grid_cell_changed.connect(self.timeline_props_display_changed.emit)
     self.snap_changed.connect(self.timeline_props_display_changed.emit)
@@ -108,68 +110,62 @@ class ProjectModel(QObject):
     self._active_seq_node = active_seq_node
     self.active_seq_node_changed.emit(active_seq_node)
   
-  @pyqtProperty(str)
-  def active_seq_node_name(self):
-    """Property representing the name of the active Sequence Node"""
-    return self.active_seq_node.name
+  def set_node_name(self, node, name):
+    """Sets the name for the specified node, and emits any appropriate signals.
+    node -- The Sequence Node to change.
+    name -- The new name. If node has a parent, the parent must not already have another child with the specified name.
+    """
+    node.name = name
+    self.node_name_changed.emit(node, name)
   
-  @active_seq_node_name.setter
-  def active_seq_node_name(self, active_seq_node_name):
-    self.active_seq_node.name = active_seq_node_name
-    self.active_seq_node_name_changed.emit(active_seq_node_name)
+  def set_subspace_boundary(self, node, boundary):
+    """Sets the subspace boundary for the specified node, and emits any appropriate signals.
+    node -- The Sequence Node to change.
+    boundary -- The new boundary rectangle.
+    """
+    node.subspace.boundary = boundary
+    self.boundary_changed.emit(node, boundary)
   
-  @pyqtProperty(Rectangle)
-  def subspace_boundary(self):
-    """Property representing the subspace boundary rectangle of the active Sequence Node"""
-    return self.active_seq_node.subspace.boundary
+  def set_grid_cell(self, node, grid_cell):
+    """Sets the grid cell rectangle for the specified node, and emits any appropriate signals.
+    node -- The Sequence Node to change.
+    grid_cell -- The new grid cell rectangle.
+    """
+    node.subspace.grid_settings.first_cell = grid_cell
+    self.grid_cell_changed.emit(node, grid_cell)
   
-  @subspace_boundary.setter
-  def subspace_boundary(self, subspace_boundary):
-    self.active_seq_node.subspace.boundary = subspace_boundary
-    self.boundary_changed.emit(subspace_boundary)
+  def set_grid_snap(self, node, grid_snap):
+    """Sets the grid snap configuration for the specified node, and emits any appropriate signals.
+    node -- The Sequence Node to change.
+    grid_snap -- The new grid snap settings.
+    """
+    node.subspace.grid_settings.snap_settings = grid_snap
+    self.snap_changed.emit(node, *grid_snap)
   
-  @pyqtProperty(Rectangle)
-  def grid_cell(self):
-    """Property representing the grid cell rectangle of the active Sequence Node"""
-    return self.active_seq_node.subspace.grid_settings.first_cell
+  def set_grid_display(self, node, grid_display):
+    """Sets the grid display configuration for the specified node, and emits any appropriate signals.
+    node -- The Sequence Node to change.
+    grid_display -- The new grid display settings.
+    """
+    node.subspace.grid_settings.line_display_settings = grid_display
+    self.show_lines_changed.emit(node, *grid_display)
   
-  @grid_cell.setter
-  def grid_cell(self, grid_cell):
-    self.active_seq_node.subspace.grid_settings.first_cell = grid_cell
-    self.grid_cell_changed.emit(grid_cell)
-  
-  @pyqtProperty(tuple)
-  def grid_snap(self):
-    """Property representing the grid snap settings of the active Sequence Node"""
-    return self.active_seq_node.subspace.grid_settings.snap_settings
-  
-  @grid_snap.setter
-  def grid_snap(self, grid_snap):
-    self.active_seq_node.subspace.grid_settings.snap_settings = grid_snap
-    self.snap_changed.emit(grid_snap)
-  
-  @pyqtProperty(tuple)
-  def grid_display(self):
-    """Property representing the grid line display settings of the active Sequence Node"""
-    return self.active_seq_node.subspace.grid_settings.line_display_settings
-  
-  @grid_display.setter
-  def grid_display(self, grid_display):
-    self.active_seq_node.subspace.grid_settings.line_display_settings = grid_display
-    self.show_lines_changed.emit(grid_display)
-  
-  def add_child(self, child):
-    """Adds the specified child node to the active Sequence Node.
-    The active Sequence Node must not already contain a different child with the same name.
+  def add_child(self, parent, child):
+    """Adds the specified child node to the specified parent node.
+    The parent node must not already contain a different child with the same name.
+    parent -- The parent node.
     child -- The child node to add.
     """
-    self.active_seq_node.add_child(child)
-    self.child_added.emit(child)
+    parent.add_child(child)
+    self.child_added.emit(parent, child)
   
-  def remove_child(self, child_name):
-    """Removes the specified child node from the active Sequence Node.
+  def remove_child(self, parent, child_name):
+    """Removes the specified child node from the specified parent node.
     If no child with the specified name is found, does nothing.
+    parent -- The parent node.
     child_name -- Name of the child to remove.
     """
-    self.active_seq_node.remove_child(child_name)
-    self.child_removed.emit(child_name)
+    if child_name in parent.children:
+      child = parent.children[child_name]
+      parent.remove_child(child_name)
+      self.child_removed.emit(parent, child)
