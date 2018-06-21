@@ -21,12 +21,18 @@ class SetBoundaryCommand(ProjectUndoCommand):
     self._old_boundary = copy.deepcopy(self.active_seq_node.subspace.boundary)
     self._new_boundary = copy.deepcopy(new_boundary)
     
-    self.setText('Boundary change ({})'.format(self.active_seq_node.name))
-    
     # Keep track of any children that will be removed by the boundary change.
     self._clipped_children = set()
     for name in self.active_seq_node.clipped_child_names(new_boundary):
       self._clipped_children.add(self.active_seq_node.children[name])
+    
+    self.setText('Boundary change ({})'.format(self.active_seq_node.name))
+    
+    self._update_obsolete()
+  
+  def _update_obsolete(self):
+    """Updates the command's obsolete status"""
+    self.setObsolete(self._old_boundary == self._new_boundary and len(self._clipped_children) == 0)
   
   def id(self):
     return self.__class__._undo_id
@@ -47,6 +53,7 @@ class SetBoundaryCommand(ProjectUndoCommand):
     if should_merge:
       self._new_boundary = command._new_boundary
       self._clipped_children.update(command._clipped_children)
+      self._update_obsolete()
     return should_merge
 
 class SetGridCellCommand(ProjectUndoCommand):
@@ -65,6 +72,12 @@ class SetGridCellCommand(ProjectUndoCommand):
     self._new_cell = copy.deepcopy(new_cell)
     
     self.setText('Grid cell change ({})'.format(self.active_seq_node.name))
+    
+    self._update_obsolete()
+  
+  def _update_obsolete(self):
+    """Updates the command's obsolete status"""
+    self.setObsolete(self._old_cell == self._new_cell)
   
   def id(self):
     return self.__class__._undo_id
@@ -80,6 +93,7 @@ class SetGridCellCommand(ProjectUndoCommand):
     should_merge = isinstance(command, self.__class__) and command.active_seq_node is self.active_seq_node
     if should_merge:
       self._new_cell = command._new_cell
+      self._update_obsolete()
     return should_merge
 
 class SetGridSnapCommand(ProjectUndoCommand):
@@ -98,6 +112,12 @@ class SetGridSnapCommand(ProjectUndoCommand):
     self._new_snap = copy.deepcopy(new_snap)
     
     self.setText('Grid snap change ({})'.format(self.active_seq_node.name))
+    
+    self._update_obsolete()
+  
+  def _update_obsolete(self):
+    """Updates the command's obsolete status"""
+    self.setObsolete(self._old_snap == self._new_snap)
   
   def id(self):
     return self.__class__._undo_id
@@ -113,6 +133,7 @@ class SetGridSnapCommand(ProjectUndoCommand):
     should_merge = isinstance(command, self.__class__) and command.active_seq_node is self.active_seq_node
     if should_merge:
       self._new_snap = command._new_snap
+      self._update_obsolete()
     return should_merge
 
 class SetGridDisplayCommand(ProjectUndoCommand):
@@ -131,6 +152,12 @@ class SetGridDisplayCommand(ProjectUndoCommand):
     self._new_display = copy.deepcopy(new_display)
     
     self.setText('Grid line display change ({})'.format(self.active_seq_node.name))
+    
+    self._update_obsolete()
+  
+  def _update_obsolete(self):
+    """Updates the command's obsolete status"""
+    self.setObsolete(self._old_display == self._new_display)
   
   def id(self):
     return self.__class__._undo_id
@@ -146,4 +173,5 @@ class SetGridDisplayCommand(ProjectUndoCommand):
     should_merge = isinstance(command, self.__class__) and command.active_seq_node is self.active_seq_node
     if should_merge:
       self._new_display = command._new_display
+      self._update_obsolete()
     return should_merge

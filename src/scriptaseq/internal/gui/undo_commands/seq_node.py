@@ -21,6 +21,8 @@ class SetActiveNameCommand(ProjectUndoCommand):
     self._new_name = copy.deepcopy(new_name)
     
     self.setText('Rename ({})'.format(self._old_name))
+    
+    self.setObsolete(self._old_name == self._new_name)
   
   def id(self):
     return self.__class__._undo_id
