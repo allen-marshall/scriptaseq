@@ -60,10 +60,6 @@ class TimelineMarkers(QQuickItem):
     if project is not None:
       project.markers_display_changed.connect(self.update)
   
-  def update(self):
-    self._init_children()
-    super().update()
-  
   def hoverMoveEvent(self, event):
     super().hoverMoveEvent(event)
     if self.project is not None and self._marker_text_h is not None and self._marker_text_v is not None:
@@ -71,7 +67,7 @@ class TimelineMarkers(QQuickItem):
       zoom = self.project.active_seq_node.subspace.zoom_settings
       boundary = self.project.active_seq_node.subspace.boundary
       mouse_pos_px = event.pos()
-      mouse_pos = (mouse_pos_px.x() / zoom[0], boundary.height + boundary.y - mouse_pos_px.y() / zoom[1])
+      mouse_pos = (boundary.x + mouse_pos_px.x() / zoom[0], boundary.height + boundary.y - mouse_pos_px.y() / zoom[1])
       threshold_dists = [dist / zoom[idx] for idx, dist in
         enumerate((LABEL_THRESHOLD_DIST_PX, LABEL_THRESHOLD_DIST_PX))]
       def close_enough(marker):
@@ -101,6 +97,8 @@ class TimelineMarkers(QQuickItem):
       self._marker_text_v.setProperty('visible', False)
   
   def updatePaintNode(self, old_node, update_data):
+    self._init_children()
+    
     # Only update if we have a Sequence Node.
     if self.project is None:
       return old_node

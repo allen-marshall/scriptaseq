@@ -22,6 +22,7 @@ class TimelineEditor(QQuickItem):
     padding -- Amount of padding to display around the editing area, in pixels.
     """
     super().__init__(parent)
+    self.setFlag(QQuickItem.ItemHasContents)
     
     # Create child references to be initialized later.
     self._grid = None
@@ -76,10 +77,10 @@ class TimelineEditor(QQuickItem):
       self._markers.project = project
     self.update()
   
-  def update(self):
+  def updatePaintNode(self, old_node, update_data):
     self._init_children()
     self._update_size()
-    super().update()
+    return old_node
   
   def _compute_edit_region(self):
     """Computes the edit region, as a rectangle object with dimensions in pixels."""
