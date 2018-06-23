@@ -2,11 +2,12 @@
 from PyQt5.Qt import pyqtProperty, QWidget, pyqtSignal, QUndoCommand, QMessageBox
 
 from scriptaseq.internal.generated.qt_ui.timeline_props_editor import Ui_TimelinePropsEditor
+from scriptaseq.internal.gui.project_model import ProjectModel
 from scriptaseq.internal.gui.qt_ui_types.rectangle_editor import RectEditor
+from scriptaseq.internal.gui.undo_commands.seq_node import SetActiveNameCommand
 from scriptaseq.internal.gui.undo_commands.subspace import SetBoundaryCommand, SetGridCellCommand, SetGridSnapCommand, \
   SetGridDisplayCommand
-from scriptaseq.seq_node import SeqNode
-from scriptaseq.internal.gui.undo_commands.seq_node import SetActiveNameCommand
+from scriptaseq.internal.gui.qt_models.marker_table_model import MarkerTableModel, MarkerTableDelegate
 
 
 class TimelinePropsEditor(QWidget, Ui_TimelinePropsEditor) :
@@ -17,7 +18,7 @@ class TimelinePropsEditor(QWidget, Ui_TimelinePropsEditor) :
   
   def __init__(self, parent=None):
     """Constructor
-    project -- The ProjectModel containing the project to be edited.
+    parent -- The parent QObject
     """
     QWidget.__init__(self, parent)
     self.setupUi(self)
@@ -27,6 +28,9 @@ class TimelinePropsEditor(QWidget, Ui_TimelinePropsEditor) :
     self._grid_cell_editor = RectEditor(self)
     self.boundsPlaceholder.addWidget(self._boundary_editor)
     self.gridCellPlaceholder.addWidget(self._grid_cell_editor)
+    self._marker_table_model = MarkerTableModel(self.markersTable)
+    self.markersTable.setModel(self._marker_table_model)
+    self.markersTable.setItemDelegate(MarkerTableDelegate(self))
     
     self.nameLineEdit.editingFinished.connect(self._name_edited)
     self._boundary_editor.rect_edited.connect(self._boundary_edited)
@@ -40,7 +44,7 @@ class TimelinePropsEditor(QWidget, Ui_TimelinePropsEditor) :
     
     self.update_form()
   
-  @pyqtProperty(SeqNode)
+  @pyqtProperty(ProjectModel)
   def project(self):
     """Property representing the project to be edited"""
     return self._project
@@ -55,6 +59,7 @@ class TimelinePropsEditor(QWidget, Ui_TimelinePropsEditor) :
     if project is not None:
       project.timeline_props_display_changed.connect(self.update_form)
     self.update_form()
+    self._marker_table_model.project = self._project
   
   def update_form(self):
     """Updates values in the form to match the active Sequence Node's settings"""
