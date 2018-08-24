@@ -52,59 +52,23 @@
    <addaction name="menuEdit"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <widget class="QDockWidget" name="dockTimeline">
+  <widget class="QDockWidget" name="dockNodeTree">
    <property name="sizePolicy">
     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
      <horstretch>0</horstretch>
      <verstretch>0</verstretch>
     </sizepolicy>
    </property>
-   <property name="accessibleName">
-    <string/>
+   <property name="floating">
+    <bool>false</bool>
    </property>
    <property name="windowTitle">
-    <string>Timeline</string>
+    <string>Node Tree</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>1</number>
    </attribute>
-   <widget class="QWidget" name="dockContentsTimeline">
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
-     <item>
-      <widget class="QQuickWidget" name="quickTimeline">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="resizeMode">
-        <enum>QQuickWidget::SizeRootObjectToView</enum>
-       </property>
-       <property name="source">
-        <url>
-         <string/>
-        </url>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </widget>
-  </widget>
-  <widget class="QDockWidget" name="dockTimelineProperties">
-   <property name="sizePolicy">
-    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-     <horstretch>0</horstretch>
-     <verstretch>0</verstretch>
-    </sizepolicy>
-   </property>
-   <property name="windowTitle">
-    <string>Timeline Properties</string>
-   </property>
-   <attribute name="dockWidgetArea">
-    <number>2</number>
-   </attribute>
-   <widget class="QWidget" name="dockTimelinePropsLayout">
+   <widget class="QWidget" name="dockNodeTreeLayout">
     <property name="sizePolicy">
      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
       <horstretch>0</horstretch>
@@ -113,7 +77,7 @@
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout_3">
      <item>
-      <layout class="QHBoxLayout" name="timelinePropsPlaceholder"/>
+      <layout class="QHBoxLayout" name="nodeTreePlaceholder"/>
      </item>
     </layout>
    </widget>
@@ -163,13 +127,6 @@
    </property>
   </action>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>QQuickWidget</class>
-   <extends>QWidget</extends>
-   <header>QtQuickWidgets/QQuickWidget</header>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections/>
 </ui>

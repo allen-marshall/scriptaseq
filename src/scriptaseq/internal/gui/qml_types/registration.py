@@ -1,10 +1,5 @@
 from PyQt5.Qt import qmlRegisterType
 
-from scriptaseq.internal.gui.qml_types.timeline_editor.editor import TimelineEditor
-from scriptaseq.internal.gui.qml_types.timeline_editor.grid import TimelineGrid
-from scriptaseq.internal.gui.qml_types.timeline_editor.markers import TimelineMarkers
-
-
 # Settings for the ScriptASeq QML library.
 QML_LIB_NAME = 'ScriptASeq'
 QML_LIB_MAJOR_VERSION = 0
@@ -19,6 +14,5 @@ def _register_type(py_type, qml_type):
 
 def register_qml_types():
   """Registers the ScriptASeq QML library with Qt."""
-  _register_type(TimelineGrid, 'PyTimelineGrid')
-  _register_type(TimelineMarkers, 'PyTimelineMarkers')
-  _register_type(TimelineEditor, 'PyTimelineEditor')
+  # Currently ScriptASeq doesn't register any QML types.
+  pass
