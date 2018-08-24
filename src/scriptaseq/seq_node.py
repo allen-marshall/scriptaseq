@@ -1,19 +1,20 @@
 """Functionality related to the Sequence Node abstraction"""
 
 from scriptaseq.prop_binder import SCRIPT_PROP_TYPE
+from scriptaseq.util.dict import ReorderableDict
 
 class SeqNode:
   """Represents a node in the Sequence Node tree."""
   
   def __init__(self, name, prop_binders=[], parent=None):
     """Constructor
-    name -- Name for this SeqNode. Must be unique among this SeqNode's siblings.
+    name -- Name for this SeqNode. Must be unique among this SeqNode's siblings, or a ValueError will be raised.
     prop_binders -- List of PropBinder objects containing the node's Property Binders, if any.
     parent -- Reference to parent node.
     """
     self._name = name
     self.prop_binders = prop_binders
-    self.children = {}
+    self.children = ReorderableDict()
     
     self.parent = parent
     if parent is not None:
@@ -25,6 +26,9 @@ class SeqNode:
   
   @name.setter
   def name(self, name):
+    """Name setter.
+    name -- Name for this SeqNode. Must be unique among this SeqNode's siblings, or a ValueError will be raised.
+    """
     parent = self.parent
     if parent is None:
       self._name = name
@@ -45,7 +49,7 @@ class SeqNode:
   
   def add_child(self, child):
     """Adds the specified child node to this SeqNode.
-    This SeqNode must not already contain a different child with the same name.
+    This SeqNode must not already contain a different child with the same name, or a ValueError will be raised.
     child -- The child SeqNode to add.
     """
     if child.name in self.children:
