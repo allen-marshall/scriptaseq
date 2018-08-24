@@ -17,6 +17,10 @@ class ReorderableDict(UserDict):
   def __setitem__(self, key, item):
     self.set_at_index(key, item)
   
+  def __delitem__(self, key):
+    super().__delitem__(self, key)
+    self._ordered_keys.remove(key)
+  
   def __iter__(self):
     for idx in range(len(self.data)):
       yield self.key_at_index(idx)

@@ -47,18 +47,15 @@ class SeqNode:
       child.parent = None
       del self.children[child_name]
   
-  def add_child(self, child):
+  def add_child(self, child, idx=None):
     """Adds the specified child node to this SeqNode.
     This SeqNode must not already contain a different child with the same name, or a ValueError will be raised.
     child -- The child SeqNode to add.
+    idx -- Index at which to place the child in this SeqNode's child ordering. Default is None, which places the child
+      after all other children.
     """
-    if child.name in self.children:
-      if self.children[child.name] is not child:
+    if child.name in self.children and self.children[child.name] is not child:
         raise ValueError("Node '{}' already has a child named '{}'.".format(self.name, child.name))
-      
-      # If we already have the specified node as a child, don't do anything else.
-      else:
-        return
     
     # Remove the child from its previous parent.
     if child.parent is not None:
@@ -66,7 +63,7 @@ class SeqNode:
     
     # Attach the child.
     child.parent = self
-    self.children[child.name] = child
+    self.children.set_at_index(child.name, child, idx)
   
   def root_ancestor(self):
     """Gets a reference to the node's root ancestor.
