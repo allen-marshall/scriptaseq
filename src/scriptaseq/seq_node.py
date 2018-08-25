@@ -3,9 +3,8 @@
 from sortedcontainers.sortedset import SortedSet
 
 from scriptaseq.prop_binder import SCRIPT_PROP_TYPE
-from scriptaseq.util.dict import ReorderableDict
 from scriptaseq.util.scripts import invoke_user_script
-
+from sortedcontainers.sorteddict import SortedDict
 
 class SeqNode:
   """Represents a node in the Sequence Node tree."""
@@ -20,7 +19,7 @@ class SeqNode:
     self._name = name
     self.prop_binders = prop_binders
     self.tags = SortedSet(tags)
-    self.children = ReorderableDict()
+    self.children = SortedDict()
     
     self.parent = parent
     if parent is not None:
@@ -53,12 +52,10 @@ class SeqNode:
       child.parent = None
       del self.children[child_name]
   
-  def add_child(self, child, idx=None):
+  def add_child(self, child):
     """Adds the specified child node to this SeqNode.
     This SeqNode must not already contain a different child with the same name, or a ValueError will be raised.
     child -- The child SeqNode to add.
-    idx -- Index at which to place the child in this SeqNode's child ordering. Default is None, which places the child
-      after all other children.
     """
     if child.name in self.children and self.children[child.name] is not child:
         raise ValueError("Node '{}' already has a child named '{}'.".format(self.name, child.name))
@@ -69,7 +66,7 @@ class SeqNode:
     
     # Attach the child.
     child.parent = self
-    self.children.set_at_index(child.name, child, idx)
+    self.children[child.name] = child
   
   def root_ancestor(self):
     """Gets a reference to the node's root ancestor.
@@ -78,6 +75,21 @@ class SeqNode:
     while ancestor.parent is not None:
       ancestor = ancestor.parent
     return ancestor
+  
+  def idx_in_parent(self):
+    """Determines the numerical index at which this child node can be found in its parent.
+    Returns None if this Sequence Node has no parent.
+    """
+    if self.parent is None:
+      return None
+    else:
+      return self.parent.children.index(self.name)
+  
+  def child_at_idx(self, idx):
+    """Finds the child at the specified numerical index in this Sequence Node's child ordering.
+    idx -- Index to query.
+    """
+    return self.children.peekitem(idx)[1]
   
   def _find_prop_binders(self, prop_name, skip_scripts=False):
     """Finds all applicable Property Binders for the specified property for this node.

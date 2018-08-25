@@ -4,7 +4,10 @@ from PyQt5.QtWidgets import QMainWindow, QUndoStack
 
 from scriptaseq.internal.generated.qt_ui.main_window import Ui_MainWindow
 from scriptaseq.internal.gui.project_model import ProjectModel
+from scriptaseq.internal.gui.qt_models.seq_node_tree_model import SeqNodeTreeModel
 from scriptaseq.seq_node import SeqNode
+from scriptaseq.internal.gui.qt_ui_types.node_tree_widget import NodeTreeWidget
+
 
 class MainWindow(QMainWindow, Ui_MainWindow):
   """Main window for a sequencing project"""
@@ -16,8 +19,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     # Create default project.
     # TODO: Support opening a project file on startup.
     # TODO: Decide what the default project should look like. For now, we just construct a test project.
-    self._project_root = SeqNode('root')
-    self._project_model = ProjectModel(self._project_root)
+    project_root = SeqNode('root')
+    project_root.add_child(SeqNode('child0'))
+    project_root.add_child(SeqNode('child1'))
+    self._project = ProjectModel(project_root)
     
     # Set up menu actions and undo stack.
     self._undo_stack = QUndoStack(self)
@@ -29,7 +34,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     self._undo_stack.cleanChanged.connect(self._set_undo_stack_clean)
     
     # Initialize GUI components.
-    # TODO
+    self._node_tree_model = SeqNodeTreeModel(self._project, self._undo_stack, self)
+    self._node_tree_widget = NodeTreeWidget(self.dockNodeTree)
+    self._node_tree_widget.node_tree_model = self._node_tree_model
+    self.nodeTreePlaceholder.addWidget(self._node_tree_widget)
   
   def _set_can_redo(self, can_redo):
     """Called when the status of whether we have an action to redo changes.
