@@ -1,7 +1,9 @@
 """Functionality for modeling a Sequence Node tree in Qt"""
 
 from PyQt5 import QtCore
-from PyQt5.Qt import QAbstractItemModel, QModelIndex, QVariant
+from PyQt5.Qt import QAbstractItemModel, QModelIndex, QVariant, QMimeData
+
+from scriptaseq.internal.gui.mime_data import SEQ_NODE_PATH_MEDIA_TYPE, MEDIA_STR_ENCODING
 
 
 class SeqNodeTreeModel(QAbstractItemModel):
@@ -30,8 +32,8 @@ class SeqNodeTreeModel(QAbstractItemModel):
       return
     
     # Make sure the specified name is available.
-    if node.parent is not None and name in node.parent.children:
-      raise ValueError("Parent node already has a child named '{}'".format(name))
+    if not node.can_be_renamed_to(name):
+      raise ValueError("Name '{}' unavailable.".format(name))
     
     # Remove the node from its parent, then add it back with the new name. (This approach makes it easier to emit the Qt
     # model signals correctly.)
@@ -164,6 +166,56 @@ class SeqNodeTreeModel(QAbstractItemModel):
           return False
     
     return False
+  
+  def mimeTypes(self):
+    return [SEQ_NODE_PATH_MEDIA_TYPE]
+  
+  def mimeData(self, indexes):
+    result = QMimeData()
+    path_data = indexes[0].internalPointer().name_path_str.encode(MEDIA_STR_ENCODING)
+    result.setData(SEQ_NODE_PATH_MEDIA_TYPE, path_data)
+    return result
+  
+  def supportedDropActions(self):
+    return QtCore.Qt.IgnoreAction | QtCore.Qt.MoveAction | QtCore.Qt.CopyAction
+  
+  def dropMimeData(self, data, action, row, column, parent):
+    if not self.canDropMimeData(data, action, row, column, parent):
+      return False
+    
+    if action == QtCore.Qt.IgnoreAction:
+      return True
+    
+    if data.hasFormat(SEQ_NODE_PATH_MEDIA_TYPE):
+      # Find the node to be moved.
+      path_str = data.data(SEQ_NODE_PATH_MEDIA_TYPE).data().decode(MEDIA_STR_ENCODING)
+      node_to_move = self.root_node.follow_name_path(path_str)
+      
+      # Find the new parent node.
+      if not parent.isValid():
+        return False
+      new_parent_node = parent.internalPointer()
+      
+      # Verify that the move will not create an inheritance loop.
+      if new_parent_node is node_to_move or any(map(lambda ancestor: ancestor is node_to_move,
+      new_parent_node.ancestors)):
+        return False
+      
+      # Verify that the move represents an actual change.
+      if node_to_move.parent is new_parent_node:
+        return False
+      
+      # Verify that the new parent doesn't already have another child with the same name as the child being moved.
+      if node_to_move.name in new_parent_node.children:
+        return False
+      
+      # Perform the move.
+      self.remove_node(node_to_move)
+      self.add_node(new_parent_node, node_to_move)
+      return True
+    
+    else:
+      return False
   
   def flags(self, index):
     if not index.isValid():

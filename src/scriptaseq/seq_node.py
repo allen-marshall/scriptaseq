@@ -6,6 +6,9 @@ from scriptaseq.prop_binder import SCRIPT_PROP_TYPE
 from scriptaseq.util.scripts import invoke_user_script
 from sortedcontainers.sorteddict import SortedDict
 
+# Separator string used when encoding a Sequence Node name path as a string.
+NAME_PATH_SEPARATOR = '/'
+
 class SeqNode:
   """Represents a node in the Sequence Node tree."""
   
@@ -32,8 +35,11 @@ class SeqNode:
   @name.setter
   def name(self, name):
     """Name setter.
-    name -- Name for this SeqNode. Must be unique among this SeqNode's siblings, or a ValueError will be raised.
+    Raises ValueError if can_be_renamed_to returns false.
+    name -- Name for this SeqNode.
     """
+    if not self.can_be_renamed_to(name):
+      raise ValueError("Name '{}' unavailable.".format(name))
     parent = self.parent
     if parent is None:
       self._name = name
@@ -41,6 +47,64 @@ class SeqNode:
       parent.remove_child(self._name)
       self._name = name
       parent.add_child(self)
+  
+  @property
+  def name_path(self):
+    """Read-only property giving the path from the root to this node, as a list of node names."""
+    if self.parent is None:
+      return [self.name]
+    else:
+      result = self.parent.name_path
+      result.append(self.name)
+      return result
+  
+  @property
+  def name_path_str(self):
+    """Read-only property giving a string representation of the path from the root to this node."""
+    return NAME_PATH_SEPARATOR.join(self.name_path)
+  
+  def follow_name_path(self, path):
+    """Finds the Sequence Node obtained by following the specified node name path, starting at this node.
+    Raises ValueError if the path leads to a nonexistant node.
+    path -- Name path list or string giving the path to follow.
+    """
+    # Convert path strings into path lists before processing.
+    if isinstance(path, str):
+      path = path.split(NAME_PATH_SEPARATOR)
+    
+    if len(path) < 1:
+      raise ValueError("Invalid node name path")
+    if path[0] != self.name:
+      raise ValueError("Expected node name '{}', found '{}'.".format(path[0], self.name))
+    
+    if len(path) == 1:
+      return self
+    
+    if path[1] not in self.children:
+      raise ValueError("Unable to follow path; no child named '{}' found.".format(path[1]))
+    
+    child = self.children[path[1]]
+    return child.follow_name_path(path[1:])
+  
+  def can_be_renamed_to(self, name):
+    """Checks if this node can be renamed to the specified name successfully.
+    A name may be unavailable e.g. due to a sibling already having the same name, or due to the name containing
+    disallowed characters. This method checks for such issues.
+    name -- The desired new name for the node.
+    """
+    # Return true if the node already has the desired name.
+    if self.name == name:
+      return True
+    
+    # Return false if the node has a sibling with the same name.
+    if self.parent is not None and name in self.parent.children:
+      return False
+    
+    # Return false if the name contains disallowed characters.
+    if NAME_PATH_SEPARATOR in name:
+      return False
+    
+    return True
   
   def remove_child(self, child_name):
     """Removes the specified child node from this SeqNode.
@@ -75,6 +139,16 @@ class SeqNode:
     while ancestor.parent is not None:
       ancestor = ancestor.parent
     return ancestor
+  
+  @property
+  def ancestors(self):
+    """Read-only property giving an iterable of this node's ancestors.
+    The iterable returns the ancestors from bottom to top, and does not include this node itself.
+    """
+    ancestor = self.parent
+    while ancestor is not None:
+      yield ancestor
+      ancestor = ancestor.parent
   
   def idx_in_parent(self):
     """Determines the numerical index at which this child node can be found in its parent.
