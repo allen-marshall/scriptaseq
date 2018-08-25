@@ -91,6 +91,23 @@ class SeqNode:
     """
     return self.children.peekitem(idx)[1]
   
+  def predict_child_idx(self, node):
+    """Determines what the specified node's numerical child index would be if it were added as a child to this node.
+    Raises ValueError if this node already has a different child with the same name as the specified node.
+    node -- The prospective child node to be added.
+    """
+    # If the node is already a child of this node, just return what its index actually is.
+    if node.parent is self:
+      return node.idx_in_parent()
+    
+    if node.name in self.children:
+      raise ValueError("Node '{}' already has a child named '{}'.".format(self.name, node.name))
+    
+    # TODO: This could probably be made more efficient.
+    children_copy = self.children.copy()
+    children_copy[node.name] = node
+    return children_copy.index(node.name)
+  
   def _find_prop_binders(self, prop_name, skip_scripts=False):
     """Finds all applicable Property Binders for the specified property for this node.
     Returns an iterable of the applicable PropBinders found. If applicable binders are found in multiple ancestor nodes,

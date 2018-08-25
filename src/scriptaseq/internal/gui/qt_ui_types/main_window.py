@@ -7,6 +7,7 @@ from scriptaseq.internal.gui.project_model import ProjectModel
 from scriptaseq.internal.gui.qt_models.seq_node_tree_model import SeqNodeTreeModel
 from scriptaseq.seq_node import SeqNode
 from scriptaseq.internal.gui.qt_ui_types.node_tree_widget import NodeTreeWidget
+from sortedcontainers.sortedlist import SortedList
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -20,9 +21,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     # TODO: Support opening a project file on startup.
     # TODO: Decide what the default project should look like. For now, we just construct a test project.
     project_root = SeqNode('root')
-    project_root.add_child(SeqNode('child0'))
+    child0 = SeqNode('child0')
+    child0.add_child(SeqNode('grandchild0'))
+    project_root.add_child(child0)
     project_root.add_child(SeqNode('child1'))
-    self._project = ProjectModel(project_root)
     
     # Set up menu actions and undo stack.
     self._undo_stack = QUndoStack(self)
@@ -34,9 +36,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     self._undo_stack.cleanChanged.connect(self._set_undo_stack_clean)
     
     # Initialize GUI components.
-    self._node_tree_model = SeqNodeTreeModel(self._project, self._undo_stack, self)
     self._node_tree_widget = NodeTreeWidget(self.dockNodeTree)
-    self._node_tree_widget.node_tree_model = self._node_tree_model
+    self._node_tree_qt_model = SeqNodeTreeModel(project_root, self)
+    self._node_tree_widget.node_tree_model = self._node_tree_qt_model
     self.nodeTreePlaceholder.addWidget(self._node_tree_widget)
   
   def _set_can_redo(self, can_redo):
