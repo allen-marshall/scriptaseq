@@ -1,19 +1,25 @@
 """Functionality related to the Sequence Node abstraction"""
 
+from sortedcontainers.sortedset import SortedSet
+
 from scriptaseq.prop_binder import SCRIPT_PROP_TYPE
 from scriptaseq.util.dict import ReorderableDict
+from scriptaseq.util.scripts import invoke_user_script
+
 
 class SeqNode:
   """Represents a node in the Sequence Node tree."""
   
-  def __init__(self, name, prop_binders=[], parent=None):
+  def __init__(self, name, prop_binders=[], tags=[], parent=None):
     """Constructor
     name -- Name for this SeqNode. Must be unique among this SeqNode's siblings, or a ValueError will be raised.
-    prop_binders -- List of PropBinder objects containing the node's Property Binders, if any.
+    prop_binders -- List of PropBinder objects containing the Property Binders owned by the node, if any.
+    tags -- Iterable containing the initial tags for the node.
     parent -- Reference to parent node.
     """
     self._name = name
     self.prop_binders = prop_binders
+    self.tags = SortedSet(tags)
     self.children = ReorderableDict()
     
     self.parent = parent
@@ -73,65 +79,83 @@ class SeqNode:
       ancestor = ancestor.parent
     return ancestor
   
-  def find_prop_binders(self, prop_name, skip_scripts=False):
+  def _find_prop_binders(self, prop_name, skip_scripts=False):
     """Finds all applicable Property Binders for the specified property for this node.
     Returns an iterable of the applicable PropBinders found. If applicable binders are found in multiple ancestor nodes,
     the ones found in the ancestors lowest in the tree are returned first. If multiple applicable binders are found in
-    the same ancestor, those values are ordered according to their order in the ancestor node's Property Binder list.
-    Note: This method can run user-supplied scripts, so the caller should generally be prepared to handle all exceptions
-    gracefully.
+    the same ancestor, those binders are ordered according to their order in the ancestor node's Property Binder list.
     prop_name -- Property name to query.
-    skip_scripts -- If true, Property Binders of script type will be skipped.
+    skip_scripts -- If true, Property Binders of Script type will be skipped.
     """
     # Traverse the tree upwards looking for applicable binders.
     ancestor = self
     while ancestor is not None:
       for prop_binder in ancestor.prop_binders:
         if prop_binder.prop_name == prop_name and not (skip_scripts and prop_binder.prop_type == SCRIPT_PROP_TYPE) \
-        and prop_binder.applies_to_descendant(ancestor, self):
+        and prop_binder.binds_to_node(self):
           yield prop_binder
       
       ancestor = ancestor.parent
   
-  def find_prop_vals(self, prop_name, skip_scripts=False):
-    """Finds all applicable values for the specified property for this node.
-    Similar to find_prop_binders, except the property values are returned rather than the PropBinders containing the
-    values.
-    Note: This method can run user-supplied scripts, so the caller should generally be prepared to handle all exceptions
-    gracefully.
+  def find_prop_binder(self, prop_name, skip_scripts=False):
+    """Finds the most applicable Property Binder for the specified property for this node.
+    Returns None if no applicable Property Binders were found.
     prop_name -- Property name to query.
-    skip_scripts -- If true, Property Binders of script type will be skipped.
+    skip_scripts -- If true, Property Binders of Script type will be ignored.
     """
-    return map(lambda binder: binder.prop_value, self._find_prop_binders(prop_name, skip_scripts))
-  
-  def find_first_prop_val(self, prop_name, skip_scripts=False):
-    """Similar to find_prop_vals, but only returns the first applicable value found.
-    Returns None if no applicable values were found.
-    Note: This method can run user-supplied scripts, so the caller should generally be prepared to handle all exceptions
-    gracefully.
-    prop_name -- Property name to query.
-    skip_scripts -- If true, Property Binders of script type will be ignored.
-    """
-    prop_vals = self.find_prop_vals(prop_name, skip_scripts)
+    prop_binders = self.find_prop_binders(prop_name, skip_scripts)
     try:
-      return prop_vals.next()
+      return prop_binders.next()
     except StopIteration:
       return None
   
-  def call_prop_script(self, prop_name, env={}):
+  def _find_prop_vals(self, prop_name, skip_scripts=False, apply_gen_scripts=True):
+    """Finds all applicable values for the specified property for this node.
+    Similar to find_prop_binders, except the property values are returned rather than the PropBinders containing the
+    values.
+    Note: If apply_gen_scripts is true, this method can run user-supplied scripts, so the caller should generally be
+    prepared to handle UserScriptErrors gracefully.
+    prop_name -- Property name to query.
+    skip_scripts -- If true, Property Binders of Script type will be skipped.
+    apply_gen_scripts -- If true, Property Binders of Scripted Value type will have their generator scripts applied to
+      generate the returned property value(s). Otherwise, the generator scripts will themselves be returned as the
+      property value(s).
+    """
+    return map(lambda binder: binder.extract_val(apply_gen_scripts), self._find_prop_binders(prop_name, skip_scripts))
+  
+  def find_prop_val(self, prop_name, default=None, skip_scripts=False, apply_gen_scripts=True):
+    """Finds the most applicable property value for the specified property for this node.
+    Returns default if no applicable values were found.
+    Note: If apply_gen_scripts is true, this method can run user-supplied scripts, so the caller should generally be
+    prepared to handle UserScriptErrors gracefully.
+    prop_name -- Property name to query.
+    default -- Default value to return if no applicable values are found.
+    skip_scripts -- If true, Property Binders of Script type will be ignored.
+    apply_gen_scripts -- If apply_gen_scripts is true and the matching PropBinder is of Scripted Value type, the
+      generator script will be applied to generate the returned property value. Otherwise, the generator script will
+      itself be returned as the property value.
+    """
+    prop_vals = self.find_prop_vals(prop_name, skip_scripts, apply_gen_scripts)
+    try:
+      return prop_vals.next()
+    except StopIteration:
+      return default
+  
+  def call_prop_script(self, prop_name, *args, **kwargs):
     """Finds a bound script under the specified property name and invokes it.
-    This method searches for applicable Property Binders with property type Script, and invokes the first one it finds.
-    The order of searching is similar to that in find_prop_binders. This method does not raise an error if no
-    appropriate script is found.
-    Note: This method can run user-supplied scripts, so the caller should generally be prepared to handle all exceptions
-    gracefully.
+    This method searches for the most applicable Property Binder with property type Script, and invokes it.
+    Returns the return value of the script.
+    Raises KeyError if no applicable script could be found under the specified property name.
+    Note: This method can run user-supplied scripts, so the caller should generally be prepared to handle
+    UserScriptErrors gracefully.
     prop_name -- Name of the property under which the script is defined.
-    env -- Extra environment information to pass to the script. Keys are variable names; values are variable values. If
-      the script modifies any variables named here, the passed dictionary will be modified to reflect those changes.
-      This can be used to extract return values from scripts when necessary.
+    args -- Positional arguments to pass to the user-supplied script.
+    kwargs -- Keyword arguments to pass to the user-supplied script.
     """
     script_binders = filter(lambda binder: binder.prop_type == SCRIPT_PROP_TYPE, self.find_prop_binders(prop_name))
     try:
-      exec(script_binders.next().prop_val, env)
+      binder = script_binders.next()
+      return invoke_user_script(binder.prop_val, *args, **kwargs)
+        
     except StopIteration:
-      pass
+      raise KeyError('No bindable script found under property name \'{}\''.format(prop_name))

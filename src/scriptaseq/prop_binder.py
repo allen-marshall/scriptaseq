@@ -3,15 +3,7 @@
 import copy
 from sortedcontainers.sortedset import SortedSet
 
-def extract_scripted_val(gen_script):
-  """Runs the specified value generator script and extracts the value it returns.
-  WARNING: Any string passed as the gen_script parameter will be executed as a Python script. Avoid passing untrusted
-    code in gen_script.
-  gen_script -- The value generator script to run, as a string.
-  """
-  env = {'script' : 'lambda: None'}
-  exec(gen_script, env)
-  return env['script']()
+from scriptaseq.util.scripts import invoke_user_script
 
 class PropType:
   """Represents a type that a property binder's value is expected to have.
@@ -39,14 +31,14 @@ class PropType:
     """Attempts to convert a property value to a different property type.
     Returns the converted value. If the value cannot be converted, returns a copy of this PropType's default value.
     Note: If old_prop_type.uses_scripted_val is true and self.uses_scripted_val is false, this function may run
-    user-supplied scripts, so the caller should generally be prepared to handle all exceptions gracefully.
+    user-supplied scripts, so the caller should generally be prepared to handle UserScriptErrors gracefully.
     prop_val -- Property value to convert.
     old_prop_type -- The previous PropType that prop_val belonged to.
     """
     # When converting from a scripted value type to a non-scripted value type, execute the generator script to get the
     # non-scripted value before performing the conversion.
     if old_prop_type.uses_scripted_val and not self.uses_scripted_val:
-      prop_val = extract_scripted_val(prop_val)
+      prop_val = invoke_user_script(prop_val)
     
     # Try to convert the value.
     try:
@@ -131,6 +123,19 @@ class PropBinder:
   def prop_type(self, prop_type):
     self.prop_val = prop_type.convert(self.prop_val, self._prop_type)
     self._prop_type = prop_type
+  
+  def extract_val(self, apply_gen_scripts=True):
+    """Extracts the value stored in the Property Binder.
+    Note: If apply_gen_scripts is true, this method can run user-supplied scripts, so the caller should generally be
+    prepared to handle UserScriptErrors gracefully.
+    apply_gen_scripts -- If apply_gen_scripts is true and this PropBinder is of a scripted value type, the generator
+      script will be applied to generate the returned property value. Otherwise, the generator script will itself be
+      returned as the property value.
+    """
+    if apply_gen_scripts and self.prop_type.uses_scripted_val:
+      return invoke_user_script(self.prop_val)
+    else:
+      return self.prop_val
   
   def binds_to_node(self, node):
     """Checks if this Property Binder can bind to the specified node.
