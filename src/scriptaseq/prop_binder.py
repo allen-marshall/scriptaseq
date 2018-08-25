@@ -1,4 +1,6 @@
 """Functionality related to Property Binders"""
+import copy
+
 
 # A binding script that causes a property to bind only to the node in which it is defined.
 SELF_ONLY_BIND_SCRIPT = 'inherit = ancestor is descendant'
@@ -40,6 +42,9 @@ SCRIPTED_VAL_PROP_TYPE = PropType('Scripted Value', 'value = None', True)
 # PropType for scripts (not to be confused with scripted values).
 SCRIPT_PROP_TYPE = PropType('Script', '')
 
+# List of PropTypes supported by ScriptASeq.
+SUPPORTED_PROP_TYPES = [STRING_PROP_TYPE, SCRIPTED_VAL_PROP_TYPE, SCRIPT_PROP_TYPE]
+
 class PropBinder:
   """Represents a Property Binder that can be attached to a Sequence Node.
   A Property Binder contains a property name and value, along with a binding script that determines to which nodes the
@@ -50,8 +55,6 @@ class PropBinder:
     WARNING: Any string passed as the bind_script parameter will likely be executed as a Python script at some point.
     Avoid passing untrusted code in bind_script. The same precaution applies to prop_val if prop_type.uses_scripted_val
     is true.
-    Note: This method can run user-supplied scripts, so the caller should generally be prepared to handle all exceptions
-    gracefully.
     prop_name -- Name of the property.
     prop_type -- PropType object indicating what type the property value is expected to have. This is meant to inform
       the GUI of what type of widget(s) to use for editing the property value.
@@ -62,32 +65,7 @@ class PropBinder:
     self.prop_name = prop_name
     self.prop_type = prop_type
     self.bind_script = bind_script
-    self.prop_val = prop_val if prop_val is not None else prop_type.def_val
-  
-  @property
-  def prop_val(self):
-    """Gets the property value."""
-    return self._prop_val
-  
-  @prop_val.setter
-  def prop_val(self, prop_val):
-    """Sets the property value.
-    WARNING: If this PropBinder is configured to use a scripted value, any string passed as the prop_val parameter will
-    be executed as a Python script immediately. Avoid passing untrusted code in prop_val.
-    Note: This method can run user-supplied scripts, so the caller should generally be prepared to handle all exceptions
-    gracefully.
-    """
-    # If this PropBinder doesn't expect a scripted value, store the provided value directly.
-    if not self.prop_type.uses_scripted_val:
-      self._prop_val = prop_val
-    
-    # Otherwise, generate the value by running the provided script.
-    elif prop_val is None:
-      self._prop_val = None
-    else:
-      env = {'value' : None}
-      exec(prop_val, env)
-      self._prop_val = env['value']
+    self.prop_val = prop_val if prop_val is not None else copy.deepcopy(prop_type.def_val)
   
   def applies_to_descendant(self, ancestor, descendant):
     """Checks if this Property Binder applies to the specified descendant node.
