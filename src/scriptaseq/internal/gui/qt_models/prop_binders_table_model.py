@@ -3,8 +3,9 @@
 from PyQt5 import QtCore
 from PyQt5.Qt import QAbstractTableModel, QStyledItemDelegate, QComboBox, QModelIndex
 
-from scriptaseq.internal.gui.undo_commands.prop_binder import SetPropBinderNameCommand, SetPropBinderTypeCommand
-from scriptaseq.prop_binder import SUPPORTED_PROP_TYPES
+from scriptaseq.internal.gui.undo_commands.prop_binder import SetPropBinderNameCommand, SetPropBinderTypeCommand, \
+  SetPropBinderFilterCommand
+from scriptaseq.prop_binder import SUPPORTED_PROP_TYPES, PropBindCriterion
 from scriptaseq.util.scripts import UserScriptError
 
 
@@ -108,7 +109,7 @@ class PropBindersTableModel(QAbstractTableModel):
     it otherwise.
     node -- Sequence Node that owns the Property Binder.
     binder_idx -- Index of the binder in the node's Property Binder list.
-    new_filter -- New binding filter for the binder.
+    new_filter -- New PropBindCriterion for the binder.
     """
     node.prop_binders[binder_idx].bind_criterion = new_filter
     
@@ -191,6 +192,12 @@ class PropBindersTableModel(QAbstractTableModel):
         elif index.column() == self.__class__._PROP_TYPE_COLUMN_IDX:
           new_prop_type = SUPPORTED_PROP_TYPES[value]
           undo_command = SetPropBinderTypeCommand(self, self._selected_node, index.row(), new_prop_type)
+          self._undo_stack.push(undo_command)
+          return True
+        
+        elif index.column() == self.__class__._BIND_FILTER_COLUMN_IDX:
+          new_filter = PropBindCriterion(value.split(BIND_FILTER_SEPARATOR))
+          undo_command = SetPropBinderFilterCommand(self, self._selected_node, index.row(), new_filter)
           self._undo_stack.push(undo_command)
           return True
      

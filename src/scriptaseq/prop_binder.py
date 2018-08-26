@@ -90,6 +90,9 @@ class PropBindCriterion:
     def tag_check(tag):
       return tag in node.tags
     return all(map(tag_check, self.bind_tags))
+  
+  def __eq__(self, other):
+    return isinstance(other, PropBindCriterion) and self.bind_tags == other.bind_tags
 
 class PropBinder:
   """Represents a Property Binder that can be attached to a Sequence Node.

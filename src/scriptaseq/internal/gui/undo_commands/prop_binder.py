@@ -76,3 +76,37 @@ class SetPropBinderTypeCommand(QUndoCommand):
   def undo(self):
     self._node_props_model.set_prop_type(self._node, self._binder_idx, self._old_prop_type)
     self._node_props_model.set_prop_val(self._node, self._binder_idx, self._old_prop_val)
+
+class SetPropBinderFilterCommand(QUndoCommand):
+  """Undo command for modifying the binding filter in a Property Binder"""
+  
+  _undo_id = gen_undo_id()
+  
+  def __init__(self, node_props_model, node, binder_idx, bind_filter, parent=None):
+    """Constructor
+    node_props_model -- PropBindersTableModel in charge of changes to Property Binders.
+    node -- The Sequence Node to which the Property Binder is directly attached.
+    binder_idx -- Index of the Property Binder to change, within the Sequence Node's Property Binder list.
+    bind_filter -- The new PropBindCriterion for the Property Binder.
+    parent -- Parent QUndoCommand.
+    """
+    super().__init__(parent)
+    
+    self._node_props_model = node_props_model
+    self._node = node
+    self._binder_idx = binder_idx
+    self._new_bind_filter = bind_filter
+    self._old_bind_filter = node.prop_binders[binder_idx].bind_criterion
+    
+    self.setText("Change Binding Filter (Node '{}', Idx {})".format(node.name, str(binder_idx)))
+    
+    self.setObsolete(self._old_bind_filter == self._new_bind_filter)
+  
+  def id(self):
+    return self.__class__._undo_id
+  
+  def redo(self):
+    self._node_props_model.set_bind_filter(self._node, self._binder_idx, self._new_bind_filter)
+  
+  def undo(self):
+    self._node_props_model.set_bind_filter(self._node, self._binder_idx, self._old_bind_filter)
