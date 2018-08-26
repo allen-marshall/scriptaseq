@@ -3,11 +3,9 @@
 from PyQt5.QtWidgets import QMainWindow, QUndoStack
 
 from scriptaseq.internal.generated.qt_ui.main_window import Ui_MainWindow
-from scriptaseq.internal.gui.project_model import ProjectModel
 from scriptaseq.internal.gui.qt_models.seq_node_tree_model import SeqNodeTreeModel
 from scriptaseq.seq_node import SeqNode
 from scriptaseq.internal.gui.qt_ui_types.node_tree_widget import NodeTreeWidget
-from sortedcontainers.sortedlist import SortedList
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -37,7 +35,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     
     # Initialize GUI components.
     self._node_tree_widget = NodeTreeWidget(self.dockNodeTree)
-    self._node_tree_qt_model = SeqNodeTreeModel(project_root, self)
+    self._node_tree_qt_model = SeqNodeTreeModel(project_root, self._undo_stack, self)
     self._node_tree_widget.node_tree_model = self._node_tree_qt_model
     self.nodeTreePlaceholder.addWidget(self._node_tree_widget)
   

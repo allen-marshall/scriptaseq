@@ -4,22 +4,27 @@ from PyQt5 import QtCore
 from PyQt5.Qt import QAbstractItemModel, QModelIndex, QVariant, QMimeData
 
 from scriptaseq.internal.gui.mime_data import SEQ_NODE_PATH_MEDIA_TYPE, MEDIA_STR_ENCODING
+from scriptaseq.internal.gui.undo_commands.seq_node import RenameNodeCommand, RemoveNodeCommand, AddNodeCommand
 
 
 class SeqNodeTreeModel(QAbstractItemModel):
   """PyQt model for the Sequence Node tree"""
   
-  def __init__(self, root_node, parent=None):
+  def __init__(self, root_node, undo_stack, parent=None):
     """Constructor
     root_node -- Root SeqNode for the Sequence Node tree.
+    undo_stack -- QUndoStack to receive undo commands generated through the model.
     parent -- Parent QObject for the model.
     """
     super().__init__(parent)
     self.root_node = root_node
+    self.undo_stack = undo_stack
   
   def rename_node(self, node, name):
     """Renames a Sequence Node.
-    Raises ValueError if the node has a sibling that already has the specified name, or if the node is the root node.
+    Raises ValueError if the specified name is not available for the specified node, or if the node is the root node.
+    Note: This method generally should only be called from within a QUndoCommand, as the user will not be able to undo
+    it otherwise.
     node -- Sequence Node to rename.
     name -- New name for the node.
     """
@@ -46,6 +51,8 @@ class SeqNodeTreeModel(QAbstractItemModel):
     """Adds a Sequence Node to the node tree.
     Raises ValueError if the node cannot be added because the desired parent already has a different child with the same
     name.
+    Note: This method generally should only be called from within a QUndoCommand, as the user will not be able to undo
+    it otherwise.
     parent -- Parent node to which the child will be added.
     node -- Child node to add.
     """
@@ -70,6 +77,8 @@ class SeqNodeTreeModel(QAbstractItemModel):
   def remove_node(self, node):
     """Removes a Sequence Node from the node tree.
     Raises ValueError if the node is the root.
+    Note: This method generally should only be called from within a QUndoCommand, as the user will not be able to undo
+    it otherwise.
     """
     if node.parent is None:
       raise ValueError('Cannot remove root node')
@@ -157,7 +166,7 @@ class SeqNodeTreeModel(QAbstractItemModel):
         
         # Rename the node.
         try:
-          self.rename_node(index.internalPointer(), value)
+          self.undo_stack.push(RenameNodeCommand(self, index.internalPointer().name_path, value))
           return True
         
         # Renaming may fail due to the parent already having a child with the desired name.
@@ -210,12 +219,15 @@ class SeqNodeTreeModel(QAbstractItemModel):
         return False
       
       # Perform the move.
-      self.remove_node(node_to_move)
-      self.add_node(new_parent_node, node_to_move)
-      return True
+      self.undo_stack.beginMacro("Move node '{}'".format(node_to_move.name))
+      try:
+        self.undo_stack.push(RemoveNodeCommand(self, node_to_move.name_path))
+        self.undo_stack.push(AddNodeCommand(self, new_parent_node.name_path, node_to_move))
+        return True
+      finally:
+        self.undo_stack.endMacro()
     
-    else:
-      return False
+    return False
   
   def flags(self, index):
     if not index.isValid():
