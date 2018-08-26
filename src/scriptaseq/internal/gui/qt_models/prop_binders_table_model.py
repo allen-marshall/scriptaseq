@@ -1,11 +1,14 @@
 """Functionality for modeling a Property Binders table in Qt"""
 
 from PyQt5 import QtCore
-from PyQt5.Qt import QAbstractTableModel, QStyledItemDelegate, QComboBox, QModelIndex, QMenu
+from PyQt5.Qt import QAbstractTableModel, QStyledItemDelegate, QComboBox, QModelIndex, QMenu, QMimeData
+import pickle
 
+from scriptaseq.internal.gui.mime_data import PROP_BINDER_PATH_MEDIA_TYPE
 from scriptaseq.internal.gui.undo_commands.prop_binder import SetPropBinderNameCommand, SetPropBinderTypeCommand, \
   SetPropBinderFilterCommand, AddPropBinderCommand, RemovePropBinderCommand
 from scriptaseq.prop_binder import SUPPORTED_PROP_TYPES, PropBindCriterion, PropBinder, STRING_PROP_TYPE
+from scriptaseq.seq_node import PropBinderPath
 from scriptaseq.util.scripts import UserScriptError
 
 
@@ -259,8 +262,60 @@ class PropBindersTableModel(QAbstractTableModel):
     # Return false if the change could not be made.
     return False
   
+  def mimeTypes(self):
+    return [PROP_BINDER_PATH_MEDIA_TYPE]
+  
+  def mimeData(self, indexes):
+    result = QMimeData()
+    binder_path = PropBinderPath(self._selected_node.name_path_str, indexes[0].row())
+    path_data = pickle.dumps(binder_path)
+    result.setData(PROP_BINDER_PATH_MEDIA_TYPE, path_data)
+    return result
+  
+  def supportedDropActions(self):
+    return QtCore.Qt.IgnoreAction | QtCore.Qt.MoveAction | QtCore.Qt.CopyAction
+  
+  def dropMimeData(self, data, action, row, column, parent):
+    if not self.canDropMimeData(data, action, row, column, parent):
+      return False
+    
+    if action == QtCore.Qt.IgnoreAction:
+      return True
+    
+    if data.hasFormat(PROP_BINDER_PATH_MEDIA_TYPE):
+      # Make sure the Property Binder being moved belongs to the currently selected Sequence Node.
+      binder_path = pickle.loads(data.data(PROP_BINDER_PATH_MEDIA_TYPE).data())
+      if self._selected_node is not self._node_tree_sel_model.model().root_node \
+      .follow_name_path(binder_path.node_path):
+        return False
+      
+      old_idx = binder_path.binder_idx
+      new_idx = len(self._selected_node.prop_binders) - 1
+      if row >= 0:
+        new_idx = row
+      elif parent.isValid():
+        new_idx = parent.row()
+      
+      # Verify that the move represents an actual change.
+      if old_idx == new_idx:
+        return True
+      
+      # Perform the move.
+      binder = self._selected_node.prop_binders[old_idx]
+      self.undo_stack.beginMacro("Move Property Binder (Node '{}', Prop '{}')".format(self._selected_node.name,
+        binder.prop_name))
+      try:
+        self.undo_stack.push(RemovePropBinderCommand(self, self._selected_node, old_idx))
+        self.undo_stack.push(AddPropBinderCommand(self, self._selected_node, new_idx, binder))
+        return True
+      finally:
+        self.undo_stack.endMacro()
+    
+    return False
+  
   def flags(self, index):
-    result = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+    result = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsDragEnabled \
+      | QtCore.Qt.ItemIsDropEnabled
     
     # Support editing in some columns.
     if index.column() in [self.__class__._PROP_NAME_COLUMN_IDX, self.__class__._PROP_TYPE_COLUMN_IDX,

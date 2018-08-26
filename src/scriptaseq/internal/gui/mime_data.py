@@ -5,3 +5,6 @@ MEDIA_STR_ENCODING = 'utf-8'
 
 # Media type for Sequence Node path-based references.
 SEQ_NODE_PATH_MEDIA_TYPE = 'application/x-scriptaseq-seqnode-path'
+
+# Media type for Property Binder path-based references.
+PROP_BINDER_PATH_MEDIA_TYPE = 'application/x-scriptaseq-propbinder-path'

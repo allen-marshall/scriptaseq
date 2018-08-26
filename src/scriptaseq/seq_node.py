@@ -276,3 +276,17 @@ class SeqNode:
         
     except StopIteration:
       raise KeyError('No bindable script found under property name \'{}\''.format(prop_name))
+
+class PropBinderPath:
+  """Path that identifies a Property Binder in a Sequence Node tree.
+  Consists of a path referring to the Sequence Node that owns the Property Binder, and an index into the Sequence Node's
+  Property Binder list.
+  """
+  
+  def __init__(self, node_path, binder_idx):
+    """Constructor
+    node_path -- Path to the Sequence Node that owns the Property Binder.
+    binder_idx -- Index into the Sequence Node's Property Binder list.
+    """
+    self.node_path = node_path
+    self.binder_idx = binder_idx

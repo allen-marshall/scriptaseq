@@ -250,7 +250,7 @@ class SeqNodeTreeModel(QAbstractItemModel):
       
       # Verify that the move represents an actual change.
       if node_to_move.parent is new_parent_node:
-        return False
+        return True
       
       # Verify that the new parent doesn't already have another child with the same name as the child being moved.
       if node_to_move.name in new_parent_node.children:
