@@ -40,11 +40,11 @@ class PropBindersTableModel(QAbstractTableModel):
     parent -- Parent QObject for the model.
     """
     super().__init__(parent)
-    self._node_tree_sel_model = node_tree_sel_model
+    self.node_tree_sel_model = node_tree_sel_model
     self.undo_stack = undo_stack
     
     # Connect signals to update the table when the selected node changes.
-    self._node_tree_sel_model.currentChanged.connect(lambda current, previous: self._update_selected_node())
+    self.node_tree_sel_model.currentChanged.connect(lambda current, previous: self._update_selected_node())
     
     # Initialize selected node.
     self._update_selected_node()
@@ -52,8 +52,8 @@ class PropBindersTableModel(QAbstractTableModel):
   def _update_selected_node(self):
     """Updates the model's internal reference to the currently selected sequence node."""
     self.beginResetModel()
-    self._selected_node = self._node_tree_sel_model.model().seq_node_from_qt_index(
-      self._node_tree_sel_model.currentIndex())
+    self._selected_node = self.node_tree_sel_model.model().seq_node_from_qt_index(
+      self.node_tree_sel_model.currentIndex())
     self.endResetModel()
   
   def _emit_data_changed(self, row, column):
@@ -285,7 +285,7 @@ class PropBindersTableModel(QAbstractTableModel):
     if data.hasFormat(PROP_BINDER_PATH_MEDIA_TYPE):
       # Make sure the Property Binder being moved belongs to the currently selected Sequence Node.
       binder_path = pickle.loads(data.data(PROP_BINDER_PATH_MEDIA_TYPE).data())
-      if self._selected_node is not self._node_tree_sel_model.model().root_node \
+      if self._selected_node is not self.node_tree_sel_model.model().root_node \
       .follow_name_path(binder_path.node_path):
         return False
       

@@ -12,6 +12,7 @@ class NodePropsWidget(QWidget, Ui_NodePropsWidget):
     self.setupUi(self)
     
     self.nodePropsTableView.setItemDelegate(PropBindersTableDelegate(self))
+    self._selected_node = None
   
   @property
   def node_props_model(self):
@@ -21,6 +22,19 @@ class NodePropsWidget(QWidget, Ui_NodePropsWidget):
   @node_props_model.setter
   def node_props_model(self, node_props_model):
     self.nodePropsTableView.setModel(node_props_model)
+    # TODO: Need to disconnect this connection if the setter gets called multiple times.
+    node_props_model.node_tree_sel_model.currentChanged.connect(
+      lambda current, previous: self._update_selected_node(current))
+  
+  def _update_selected_node(self, index):
+    """Updates the GUI to reflect changes in the currently selected Sequence Node.
+    index -- Model index into the Sequence Node tree model indicating the currently selected sequence node.
+    """
+    self._selected_node = self.node_props_model.node_tree_sel_model.model().seq_node_from_qt_index(index)
+    if self._selected_node is None:
+      self.selectedNodeLabel.setText('No node selected')
+    else:
+      self.selectedNodeLabel.setText(self._selected_node.name_path_str)
   
   def contextMenuEvent(self, event):
     # Get event position relative to the node properties view.
