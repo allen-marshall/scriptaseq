@@ -2,8 +2,10 @@
 
 from PyQt5.Qt import QUndoCommand
 import copy
+from sortedcontainers.sortedset import SortedSet
 
 from scriptaseq.internal.gui.undo_commands.id_gen import gen_undo_id
+
 
 class RenameNodeCommand(QUndoCommand):
   """Undo command for modifying a Sequence Node's name"""
@@ -111,3 +113,40 @@ class RemoveNodeCommand(QUndoCommand):
   
   def undo(self):
     self._node_tree_model.add_node(self._parent_node, self._node_to_remove)
+
+class SetNodeTagsCommand(QUndoCommand):
+  """Undo command for setting a Sequence Node's tags."""
+  
+  _undo_id = gen_undo_id()
+  
+  def __init__(self, node_props_widget, node, tags, parent=None):
+    """Constructor
+    node_props_widget -- NodePropsWidget in charge of node tags.
+    node -- Sequence Node whose tags are to be changed.
+    tags -- Iterable containing the new tags for the Sequence Node.
+    parent -- Parent QUndoCommand.
+    """
+    super().__init__(parent)
+    
+    self._node_props_widget = node_props_widget
+    self._node = node
+    self._new_tags = SortedSet(tags)
+    self._old_tags = copy.deepcopy(node.tags)
+    
+    self.setText("Update Tags (Node '{}')".format(node.name))
+    self.setObsolete(self._new_tags == self._old_tags)
+  
+  def id(self):
+    return self.__class__._undo_id
+  
+  def redo(self):
+    self._node.tags.clear()
+    self._node.tags.update(self._new_tags)
+    if self._node_props_widget.selected_node is self._node:
+      self._node_props_widget.update_tag_display()
+  
+  def undo(self):
+    self._node.tags.clear()
+    self._node.tags.update(self._old_tags)
+    if self._node_props_widget.selected_node is self._node:
+      self._node_props_widget.update_tag_display()

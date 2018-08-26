@@ -25,6 +25,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     project_root = SeqNode('root')
     project_root.prop_binders.append(PropBinder('TestProp', SCRIPT_PROP_TYPE,
       bind_criterion=PropBindCriterion(['TopTag'])))
+    project_root.tags.add('Root')
+    project_root.tags.add('TheRoot')
     child0 = SeqNode('child0')
     child0.add_child(SeqNode('grandchild0'))
     child0.prop_binders.append(PropBinder('Test0', STRING_PROP_TYPE,
@@ -51,6 +53,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     self.nodeTreePlaceholder.addWidget(self._node_tree_widget)
     
     self._node_props_widget = NodePropsWidget(self.dockNodeProps)
+    self._node_props_widget.undo_stack = self._undo_stack
     self._node_props_qt_model = PropBindersTableModel(self._node_tree_widget.node_tree_sel_model, self._undo_stack,
       self)
     self._node_props_widget.node_props_model = self._node_props_qt_model
