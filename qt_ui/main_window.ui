@@ -82,6 +82,21 @@
     </layout>
    </widget>
   </widget>
+  <widget class="QDockWidget" name="dockNodeProps">
+   <property name="windowTitle">
+    <string>Node Properties</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockNodePropsLayout">
+    <layout class="QHBoxLayout" name="horizontalLayout_4">
+     <item>
+      <layout class="QHBoxLayout" name="nodePropsPlaceholder"/>
+     </item>
+    </layout>
+   </widget>
+  </widget>
   <action name="actionOpenProject">
    <property name="text">
     <string>&amp;Open...</string>

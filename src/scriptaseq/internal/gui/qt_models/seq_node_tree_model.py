@@ -111,6 +111,13 @@ class SeqNodeTreeModel(QAbstractItemModel):
     else:
       return self.createIndex(node.idx_in_parent(), 0, node)
   
+  def seq_node_from_qt_index(self, index):
+    """Extracts the Sequence Node at the specified Qt model index.
+    Returns None if the index does not point to a Sequence Node.
+    index -- Qt model index of the Sequence Node to get.
+    """
+    return index.internalPointer() if index.isValid() else None
+  
   def make_context_menu(self, index, parent=None):
     """Creates a context menu for the item at the specified model index.
     Returns None if no context menu should be shown for the specified index.

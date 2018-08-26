@@ -3,9 +3,13 @@
 from PyQt5.QtWidgets import QMainWindow, QUndoStack
 
 from scriptaseq.internal.generated.qt_ui.main_window import Ui_MainWindow
+from scriptaseq.internal.gui.qt_models.prop_binders_table_model import PropBindersTableModel
 from scriptaseq.internal.gui.qt_models.seq_node_tree_model import SeqNodeTreeModel
-from scriptaseq.seq_node import SeqNode
+from scriptaseq.internal.gui.qt_ui_types.node_props_widget import NodePropsWidget
 from scriptaseq.internal.gui.qt_ui_types.node_tree_widget import NodeTreeWidget
+from scriptaseq.prop_binder import PropBinder, STRING_PROP_TYPE, PropBindCriterion, SCRIPTED_VAL_PROP_TYPE,\
+  SCRIPT_PROP_TYPE
+from scriptaseq.seq_node import SeqNode
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -19,8 +23,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     # TODO: Support opening a project file on startup.
     # TODO: Decide what the default project should look like. For now, we just construct a test project.
     project_root = SeqNode('root')
+    project_root.prop_binders.append(PropBinder('TestProp', SCRIPT_PROP_TYPE,
+      bind_criterion=PropBindCriterion(['TopTag'])))
     child0 = SeqNode('child0')
     child0.add_child(SeqNode('grandchild0'))
+    child0.prop_binders.append(PropBinder('Test0', STRING_PROP_TYPE,
+      bind_criterion=PropBindCriterion(['TagB', 'TagA'])))
+    child0.prop_binders.append(PropBinder('Test1', SCRIPTED_VAL_PROP_TYPE, use_def_val=False,
+      prop_val='script = lambda: 5', bind_criterion=PropBindCriterion([])))
     project_root.add_child(child0)
     project_root.add_child(SeqNode('child1'))
     
@@ -34,10 +44,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     self._undo_stack.cleanChanged.connect(self._set_undo_stack_clean)
     
     # Initialize GUI components.
+    
     self._node_tree_widget = NodeTreeWidget(self.dockNodeTree)
     self._node_tree_qt_model = SeqNodeTreeModel(project_root, self._undo_stack, self)
     self._node_tree_widget.node_tree_model = self._node_tree_qt_model
     self.nodeTreePlaceholder.addWidget(self._node_tree_widget)
+    
+    self._node_props_widget = NodePropsWidget(self.dockNodeProps)
+    self._node_props_qt_model = PropBindersTableModel(self._node_tree_widget.node_tree_sel_model, self._undo_stack,
+      self)
+    self._node_props_widget.node_props_model = self._node_props_qt_model
+    self.nodePropsPlaceholder.addWidget(self._node_props_widget)
   
   def _set_can_redo(self, can_redo):
     """Called when the status of whether we have an action to redo changes.

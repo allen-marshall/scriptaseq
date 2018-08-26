@@ -1,10 +1,12 @@
 """Functionality related to the Sequence Node abstraction"""
 
+import copy
+from sortedcontainers.sorteddict import SortedDict
 from sortedcontainers.sortedset import SortedSet
 
 from scriptaseq.prop_binder import SCRIPT_PROP_TYPE
 from scriptaseq.util.scripts import invoke_user_script
-from sortedcontainers.sorteddict import SortedDict
+
 
 # Separator string used when encoding a Sequence Node name path as a string.
 NAME_PATH_SEPARATOR = '/'
@@ -23,7 +25,7 @@ class SeqNode:
     parent -- Reference to parent node.
     """
     self._name = name
-    self.prop_binders = prop_binders
+    self.prop_binders = copy.deepcopy(prop_binders)
     self.tags = SortedSet(tags)
     self.children = SortedDict()
     
