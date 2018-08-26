@@ -23,10 +23,10 @@ class NodePropsWidget(QWidget, Ui_NodePropsWidget):
     self.nodePropsTableView.setModel(node_props_model)
   
   def contextMenuEvent(self, event):
-    # Get event position relative to the node tree view.
-    props_view_pos = event.globalPos() - self.seqNodePropsView.mapToGlobal(QPoint())
+    # Get event position relative to the node properties view.
+    props_view_pos = event.globalPos() - self.nodePropsTableView.viewport().mapToGlobal(QPoint())
     
-    model_index = self.seqNodePropsView.indexAt(props_view_pos)
+    model_index = self.nodePropsTableView.indexAt(props_view_pos)
     if model_index.isValid():
       menu = self.node_props_model.make_context_menu(model_index, self)
       if menu is not None:

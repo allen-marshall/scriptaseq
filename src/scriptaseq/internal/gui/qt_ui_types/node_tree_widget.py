@@ -30,7 +30,7 @@ class NodeTreeWidget(QWidget, Ui_NodeTreeWidget):
   
   def contextMenuEvent(self, event):
     # Get event position relative to the node tree view.
-    tree_view_pos = event.globalPos() - self.seqNodeTreeView.mapToGlobal(QPoint())
+    tree_view_pos = event.globalPos() - self.seqNodeTreeView.viewport().mapToGlobal(QPoint())
     
     model_index = self.seqNodeTreeView.indexAt(tree_view_pos)
     if model_index.isValid():

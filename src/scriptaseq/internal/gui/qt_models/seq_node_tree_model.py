@@ -91,15 +91,6 @@ class SeqNodeTreeModel(QAbstractItemModel):
     parent.remove_child(node.name)
     self.endRemoveRows()
   
-  def add_empty_node_undoable(self, parent):
-    """Adds an empty child node to the specified parent.
-    parent -- Parent node to which a new child will be added.
-    Note: This method does not need to be called from within a QUndoCommand, as it creates one internally.
-    """
-    node_name = parent.suggest_child_name()
-    child = SeqNode(node_name)
-    self.undo_stack.push(AddNodeCommand(self, parent.name_path, child))
-  
   def make_qt_index(self, node):
     """Creates a QModelIndex pointing to the specified Sequence Node.
     node -- Sequence Node for which a model index is to be made.
@@ -133,7 +124,9 @@ class SeqNodeTreeModel(QAbstractItemModel):
     
     # Add menu item for creating a new child.
     def new_child_func():
-      self.add_empty_node_undoable(node)
+      child_name = node.suggest_child_name()
+      child = SeqNode(child_name)
+      self.undo_stack.push(AddNodeCommand(self, node.name_path, child))
     new_child_action = menu.addAction('&New child')
     new_child_action.triggered.connect(new_child_func)
     

@@ -1,11 +1,11 @@
 """Functionality for modeling a Property Binders table in Qt"""
 
 from PyQt5 import QtCore
-from PyQt5.Qt import QAbstractTableModel, QStyledItemDelegate, QComboBox, QModelIndex
+from PyQt5.Qt import QAbstractTableModel, QStyledItemDelegate, QComboBox, QModelIndex, QMenu
 
 from scriptaseq.internal.gui.undo_commands.prop_binder import SetPropBinderNameCommand, SetPropBinderTypeCommand, \
-  SetPropBinderFilterCommand
-from scriptaseq.prop_binder import SUPPORTED_PROP_TYPES, PropBindCriterion
+  SetPropBinderFilterCommand, AddPropBinderCommand, RemovePropBinderCommand
+from scriptaseq.prop_binder import SUPPORTED_PROP_TYPES, PropBindCriterion, PropBinder, STRING_PROP_TYPE
 from scriptaseq.util.scripts import UserScriptError
 
 
@@ -38,7 +38,7 @@ class PropBindersTableModel(QAbstractTableModel):
     """
     super().__init__(parent)
     self._node_tree_sel_model = node_tree_sel_model
-    self._undo_stack = undo_stack
+    self.undo_stack = undo_stack
     
     # Connect signals to update the table when the selected node changes.
     self._node_tree_sel_model.currentChanged.connect(lambda current, previous: self._update_selected_node())
@@ -57,6 +57,33 @@ class PropBindersTableModel(QAbstractTableModel):
     """Emits a data changed signal for the item at the specified row and column."""
     changed_index = self.index(row, column)
     self.dataChanged.emit(changed_index, changed_index)
+  
+  def add_prop_binder(self, node, binder_idx, binder):
+    """Adds a new Property Binder to a Sequence Node.
+    Note: This method generally should only be called from within a QUndoCommand, as the user will not be able to undo
+    it otherwise.
+    node -- Sequence Node that will own the Property Binder.
+    binder_idx -- Desired index of the binder in the node's Property Binder list.
+    binder -- New binder to add to the Sequence Node.
+    """ 
+    self.beginInsertRows(QModelIndex(), binder_idx, binder_idx)
+    try:
+      node.prop_binders.insert(binder_idx, binder)
+    finally:
+      self.endInsertRows()
+  
+  def remove_prop_binder(self, node, binder_idx):
+    """Removes a Property Binder from a Sequence Node.
+    Note: This method generally should only be called from within a QUndoCommand, as the user will not be able to undo
+    it otherwise.
+    node -- Sequence Node that owns the Property Binder.
+    binder_idx -- Index of the binder to delete in the node's Property Binder list.
+    """
+    self.beginRemoveRows(QModelIndex(), binder_idx, binder_idx)
+    try:
+      del node.prop_binders[binder_idx]
+    finally:
+      self.endRemoveRows()
   
   def set_prop_name(self, node, binder_idx, new_prop_name):
     """Sets the property name for a Property Binder.
@@ -116,6 +143,34 @@ class PropBindersTableModel(QAbstractTableModel):
     # If the node we are changing is the selected node, update the GUI table.
     if self._selected_node is node:
       self._emit_data_changed(binder_idx, self.__class__._BIND_FILTER_COLUMN_IDX)
+  
+  def make_context_menu(self, index, parent=None):
+    """Creates a context menu for the item at the specified model index.
+    Returns None if no context menu should be shown for the specified index.
+    index -- QModelIndex pointing to the item for which the context menu should be created.
+    parent -- Parent widget for the context menu.
+    """
+    if not index.isValid():
+      return None
+    
+    node = self._selected_node
+    
+    menu = QMenu(parent)
+    
+    # Add menu item for creating a new Property Binder.
+    def new_binder_func():
+      binder = PropBinder('', STRING_PROP_TYPE)
+      self.undo_stack.push(AddPropBinderCommand(self, node, index.row() + 1, binder))
+    new_binder_action = menu.addAction('&New Property Binder')
+    new_binder_action.triggered.connect(new_binder_func)
+    
+    # Add menu item for deleting the Property Binder.
+    def delete_func():
+      self.undo_stack.push(RemovePropBinderCommand(self, node, index.row()))
+    delete_action = menu.addAction('&Delete')
+    delete_action.triggered.connect(delete_func)
+    
+    return menu
   
   def rowCount(self, parent=QModelIndex()):
     if parent.isValid():
@@ -186,19 +241,19 @@ class PropBindersTableModel(QAbstractTableModel):
       if role == QtCore.Qt.EditRole:
         if index.column() == self.__class__._PROP_NAME_COLUMN_IDX:
           undo_command = SetPropBinderNameCommand(self, self._selected_node, index.row(), value)
-          self._undo_stack.push(undo_command)
+          self.undo_stack.push(undo_command)
           return True
         
         elif index.column() == self.__class__._PROP_TYPE_COLUMN_IDX:
           new_prop_type = SUPPORTED_PROP_TYPES[value]
           undo_command = SetPropBinderTypeCommand(self, self._selected_node, index.row(), new_prop_type)
-          self._undo_stack.push(undo_command)
+          self.undo_stack.push(undo_command)
           return True
         
         elif index.column() == self.__class__._BIND_FILTER_COLUMN_IDX:
           new_filter = PropBindCriterion(value.split(BIND_FILTER_SEPARATOR))
           undo_command = SetPropBinderFilterCommand(self, self._selected_node, index.row(), new_filter)
-          self._undo_stack.push(undo_command)
+          self.undo_stack.push(undo_command)
           return True
      
     # Return false if the change could not be made.
