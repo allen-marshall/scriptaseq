@@ -193,12 +193,6 @@ class PropBindersTableModel(QAbstractTableModel):
     
     return result
 
-
-
-
-
-# TODO: Remove everything below this line before committing.
-
 class PropBindersTableDelegate(QStyledItemDelegate):
   """Qt table delegate for a table of Property Binders"""
   
