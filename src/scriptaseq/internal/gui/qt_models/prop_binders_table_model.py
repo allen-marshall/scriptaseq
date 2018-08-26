@@ -5,6 +5,7 @@ from PyQt5.Qt import QAbstractTableModel, QStyledItemDelegate, QComboBox, QModel
 
 from scriptaseq.internal.gui.undo_commands.prop_binder import SetPropBinderNameCommand, SetPropBinderTypeCommand
 from scriptaseq.prop_binder import SUPPORTED_PROP_TYPES
+from scriptaseq.util.scripts import UserScriptError
 
 
 # Separator string for displaying binding filters as strings.
@@ -147,20 +148,32 @@ class PropBindersTableModel(QAbstractTableModel):
       if role == QtCore.Qt.DisplayRole:
         if index.column() == self.__class__._PROP_NAME_COLUMN_IDX:
           return binder.prop_name
+        
         elif index.column() == self.__class__._PROP_TYPE_COLUMN_IDX:
           return binder.prop_type.name
+        
         elif index.column() == self.__class__._BIND_FILTER_COLUMN_IDX:
           return BIND_FILTER_SEPARATOR.join(binder.bind_criterion.bind_tags)
+        
         elif index.column() == self.__class__._PROP_VALUE_COLUMN_IDX:
-          return str(binder.prop_val)
+          # If the value is scripted, try to run the script and display the generated value. Otherwise, just get the
+          # stored value.
+          try:
+            prop_val = binder.extract_val()
+          except UserScriptError:
+            return 'Script Error'
+          
+          return str(prop_val)
       
       # Edit role
       elif role == QtCore.Qt.EditRole:
         if index.column() == self.__class__._PROP_NAME_COLUMN_IDX:
           return binder.prop_name
+        
         elif index.column() == self.__class__._PROP_TYPE_COLUMN_IDX:
           # TODO: This could probably be made more efficient.
           return SUPPORTED_PROP_TYPES.index(binder.prop_type)
+       
         elif index.column() == self.__class__._BIND_FILTER_COLUMN_IDX:
           return BIND_FILTER_SEPARATOR.join(binder.bind_criterion.bind_tags)
     
@@ -174,6 +187,7 @@ class PropBindersTableModel(QAbstractTableModel):
           undo_command = SetPropBinderNameCommand(self, self._selected_node, index.row(), value)
           self._undo_stack.push(undo_command)
           return True
+        
         elif index.column() == self.__class__._PROP_TYPE_COLUMN_IDX:
           new_prop_type = SUPPORTED_PROP_TYPES[value]
           undo_command = SetPropBinderTypeCommand(self, self._selected_node, index.row(), new_prop_type)
