@@ -9,6 +9,9 @@ from sortedcontainers.sorteddict import SortedDict
 # Separator string used when encoding a Sequence Node name path as a string.
 NAME_PATH_SEPARATOR = '/'
 
+# Prefix string included at the start of names suggested by SeqNode.suggest_child_name.
+DEFAULT_NAME_PREFIX = '_n'
+
 class SeqNode:
   """Represents a node in the Sequence Node tree."""
   
@@ -105,6 +108,15 @@ class SeqNode:
       return False
     
     return True
+  
+  def suggest_child_name(self):
+    """Suggests a name that is currently available for children of this node."""
+    name_num = len(self.children)
+    name = DEFAULT_NAME_PREFIX + str(name_num)
+    while name in self.children:
+      name_num += 1
+      name = DEFAULT_NAME_PREFIX + str(name_num)
+    return name
   
   def remove_child(self, child_name):
     """Removes the specified child node from this SeqNode.

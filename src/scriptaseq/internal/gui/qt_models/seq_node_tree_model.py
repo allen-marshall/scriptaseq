@@ -1,10 +1,11 @@
 """Functionality for modeling a Sequence Node tree in Qt"""
 
 from PyQt5 import QtCore
-from PyQt5.Qt import QAbstractItemModel, QModelIndex, QVariant, QMimeData
+from PyQt5.Qt import QAbstractItemModel, QModelIndex, QVariant, QMimeData, QMenu
 
 from scriptaseq.internal.gui.mime_data import SEQ_NODE_PATH_MEDIA_TYPE, MEDIA_STR_ENCODING
 from scriptaseq.internal.gui.undo_commands.seq_node import RenameNodeCommand, RemoveNodeCommand, AddNodeCommand
+from scriptaseq.seq_node import SeqNode
 
 
 class SeqNodeTreeModel(QAbstractItemModel):
@@ -90,6 +91,15 @@ class SeqNodeTreeModel(QAbstractItemModel):
     parent.remove_child(node.name)
     self.endRemoveRows()
   
+  def add_empty_node_undoable(self, parent):
+    """Adds an empty child node to the specified parent.
+    parent -- Parent node to which a new child will be added.
+    Note: This method does not need to be called from within a QUndoCommand, as it creates one internally.
+    """
+    node_name = parent.suggest_child_name()
+    child = SeqNode(node_name)
+    self.undo_stack.push(AddNodeCommand(self, parent.name_path, child))
+  
   def make_qt_index(self, node):
     """Creates a QModelIndex pointing to the specified Sequence Node.
     node -- Sequence Node for which a model index is to be made.
@@ -100,6 +110,34 @@ class SeqNodeTreeModel(QAbstractItemModel):
     
     else:
       return self.createIndex(node.idx_in_parent(), 0, node)
+  
+  def make_context_menu(self, index, parent=None):
+    """Creates a context menu for the item at the specified model index.
+    Returns None if no context menu should be shown for the specified index.
+    index -- QModelIndex pointing to the item for which the context menu should be created.
+    parent -- Parent widget for the context menu.
+    """
+    if not index.isValid():
+      return None
+    
+    node = index.internalPointer()
+    
+    menu = QMenu(parent)
+    
+    # Add menu item for creating a new child.
+    def new_child_func():
+      self.add_empty_node_undoable(node)
+    new_child_action = menu.addAction('&New child')
+    new_child_action.triggered.connect(new_child_func)
+    
+    # Add menu item for deleting the node if it is not the root node.
+    if node.parent is not None:
+      def delete_func():
+        self.undo_stack.push(RemoveNodeCommand(self, node.name_path))
+      delete_action = menu.addAction('&Delete')
+      delete_action.triggered.connect(delete_func)
+    
+    return menu
   
   def index(self, row, column, parent=QModelIndex()):
     if not self.hasIndex(row, column, parent):
