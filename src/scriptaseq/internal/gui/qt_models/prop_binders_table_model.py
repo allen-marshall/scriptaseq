@@ -3,6 +3,7 @@
 from PyQt5 import QtCore
 from PyQt5.Qt import QAbstractTableModel, QStyledItemDelegate, QComboBox, QModelIndex
 
+from scriptaseq.internal.gui.undo_commands.prop_binder import SetPropBinderNameCommand, SetPropBinderTypeCommand
 from scriptaseq.prop_binder import SUPPORTED_PROP_TYPES
 
 
@@ -84,6 +85,21 @@ class PropBindersTableModel(QAbstractTableModel):
     # If the node we are changing is the selected node, update the GUI table.
     if self._selected_node is node:
       self._emit_data_changed(binder_idx, self.__class__._PROP_TYPE_COLUMN_IDX)
+      self._emit_data_changed(binder_idx, self.__class__._PROP_VALUE_COLUMN_IDX)
+  
+  def set_prop_val(self, node, binder_idx, new_prop_val):
+    """Sets the property value for a Property Binder.
+    Note: This method generally should only be called from within a QUndoCommand, as the user will not be able to undo
+    it otherwise.
+    node -- Sequence Node that owns the Property Binder.
+    binder_idx -- Index of the binder in the node's Property Binder list.
+    new_prop_val -- New property value for the binder.
+    """
+    node.prop_binders[binder_idx].prop_val = new_prop_val
+    
+    # If the node we are changing is the selected node, update the GUI table.
+    if self._selected_node is node:
+      self._emit_data_changed(binder_idx, self.__class__._PROP_VALUE_COLUMN_IDX)
   
   def set_bind_filter(self, node, binder_idx, new_filter):
     """Sets the binding filter for a Property Binder.
@@ -145,9 +161,27 @@ class PropBindersTableModel(QAbstractTableModel):
         elif index.column() == self.__class__._PROP_TYPE_COLUMN_IDX:
           # TODO: This could probably be made more efficient.
           return SUPPORTED_PROP_TYPES.index(binder.prop_type)
+        elif index.column() == self.__class__._BIND_FILTER_COLUMN_IDX:
+          return BIND_FILTER_SEPARATOR.join(binder.bind_criterion.bind_tags)
     
     # If no data was found, return an invalid value.
     return None
+  
+  def setData(self, index, value, role):
+    if index.isValid() and 0 <= index.row() < self.rowCount() and 0 <= index.column() < self.columnCount():
+      if role == QtCore.Qt.EditRole:
+        if index.column() == self.__class__._PROP_NAME_COLUMN_IDX:
+          undo_command = SetPropBinderNameCommand(self, self._selected_node, index.row(), value)
+          self._undo_stack.push(undo_command)
+          return True
+        elif index.column() == self.__class__._PROP_TYPE_COLUMN_IDX:
+          new_prop_type = SUPPORTED_PROP_TYPES[value]
+          undo_command = SetPropBinderTypeCommand(self, self._selected_node, index.row(), new_prop_type)
+          self._undo_stack.push(undo_command)
+          return True
+     
+    # Return false if the change could not be made.
+    return False
   
   def flags(self, index):
     result = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
@@ -158,3 +192,48 @@ class PropBindersTableModel(QAbstractTableModel):
       result |= QtCore.Qt.ItemIsEditable
     
     return result
+
+
+
+
+
+# TODO: Remove everything below this line before committing.
+
+class PropBindersTableDelegate(QStyledItemDelegate):
+  """Qt table delegate for a table of Property Binders"""
+  
+  def __init__(self, parent):
+    """Constructor
+    parent -- Parent QObject for the delegate.
+    """
+    super().__init__(parent)
+  
+  def createEditor(self, parent, option, index):
+    # For the property type column, use a combo box with the allowed property types.
+    if index.column() == PropBindersTableModel._PROP_TYPE_COLUMN_IDX:
+      editor = QComboBox(parent)
+      for cb_idx, prop_type in enumerate(SUPPORTED_PROP_TYPES):
+        editor.addItem(prop_type.name, cb_idx)
+      return editor
+    
+    # Use default editor for other cases.
+    return super().createEditor(parent, option, index)
+  
+  def setEditorData(self, editor, index):
+    # For the property type column, set the selected index of the combo box.
+    if index.column() == PropBindersTableModel._PROP_TYPE_COLUMN_IDX:
+      editor.setProperty('currentIndex', index.data(QtCore.Qt.EditRole))
+    
+    # Use default behavior for other cases.
+    else:
+      return super().setEditorData(editor, index)
+  
+  def setModelData(self, editor, model, index):
+    # For the property type column, use the property type index from the combo box.
+    if index.column() == PropBindersTableModel._PROP_TYPE_COLUMN_IDX:
+      new_data = editor.currentData()
+      model.setData(index, new_data, QtCore.Qt.EditRole)
+    
+    # Use default behavior for other cases.
+    else:
+      return super().setModelData(editor, model, index)

@@ -3,11 +3,15 @@
 from PyQt5.Qt import QWidget, QPoint
 
 from scriptaseq.internal.generated.qt_ui.node_props_widget import Ui_NodePropsWidget
+from scriptaseq.internal.gui.qt_models.prop_binders_table_model import PropBindersTableDelegate
+
 
 class NodePropsWidget(QWidget, Ui_NodePropsWidget):
   def __init__(self, parent=None):
     QWidget.__init__(self, parent)
     self.setupUi(self)
+    
+    self.nodePropsTableView.setItemDelegate(PropBindersTableDelegate(self))
   
   @property
   def node_props_model(self):
