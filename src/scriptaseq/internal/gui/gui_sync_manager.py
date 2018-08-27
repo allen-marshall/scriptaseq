@@ -92,6 +92,7 @@ class GUISyncManager(QObject):
     binder -- New binder to add to the Sequence Node.
     """
     self._prop_binders_table_model.add_prop_binder(node, binder_idx, binder)
+    self._selected_binder_changed()
   
   def remove_prop_binder(self, node, binder_idx):
     """Removes a Property Binder from a Sequence Node.
@@ -99,6 +100,7 @@ class GUISyncManager(QObject):
     binder_idx -- Index of the binder to delete in the node's Property Binder list.
     """
     self._prop_binders_table_model.remove_prop_binder(node, binder_idx)
+    self._selected_binder_changed()
   
   def set_prop_name(self, node, binder_idx, new_prop_name):
     """Sets the property name for a Property Binder.
