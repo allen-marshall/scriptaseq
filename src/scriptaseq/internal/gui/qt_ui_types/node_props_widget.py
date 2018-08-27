@@ -62,7 +62,7 @@ class NodePropsWidget(QWidget, Ui_NodePropsWidget):
     
     model_index = self.nodePropsTableView.indexAt(props_view_pos)
     if model_index.isValid():
-      menu = self.node_props_model.make_context_menu(model_index, self)
+      menu = self.nodePropsTableView.model().make_context_menu(model_index, self)
       if menu is not None:
         event.setAccepted(True)
         menu.exec_(event.globalPos())

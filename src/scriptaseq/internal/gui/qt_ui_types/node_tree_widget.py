@@ -18,7 +18,7 @@ class NodeTreeWidget(QWidget, Ui_NodeTreeWidget):
     
     model_index = self.seqNodeTreeView.indexAt(tree_view_pos)
     if model_index.isValid():
-      menu = self.node_tree_model.make_context_menu(model_index, self)
+      menu = self.seqNodeTreeView.model().make_context_menu(model_index, self)
       if menu is not None:
         event.setAccepted(True)
         menu.exec_(event.globalPos())
