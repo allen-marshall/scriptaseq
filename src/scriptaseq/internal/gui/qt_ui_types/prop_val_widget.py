@@ -39,4 +39,5 @@ class PropValWidget(QWidget, Ui_PropValWidget):
       self.selectedBinderLabel.setText('No binder selected')
     else:
       binder = self._selected_node.prop_binders[self._selected_binder_idx]
-      self.selectedBinderLabel.setText("{} ('{}', {})".format(str(self._selected_binder_idx), binder.prop_name, binder.prop_type.name))
+      self.selectedBinderLabel.setText("{} ('{}', {})".format(str(self._selected_binder_idx), binder.prop_name,
+        binder.prop_type.name))

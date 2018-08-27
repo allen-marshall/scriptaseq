@@ -36,14 +36,18 @@ class PropBindersTableModel(QAbstractTableModel):
   # Column index for the property value column.
   _PROP_VALUE_COLUMN_IDX = 3
   
-  def __init__(self, undo_stack, parent=None):
+  def __init__(self, root_node, undo_stack, gui_sync_manager, parent=None):
     """Constructor
+    root_node -- Root Sequence Node.
     node_tree_sel_model -- QItemSelectionModel from which the selected node will be determined.
     undo_stack -- QUndoStack to receive undo commands generated through the model.
+    gui_sync_manager -- GUISyncManager in charge of keeping the GUI up to date.
     parent -- Parent QObject for the model.
     """
     super().__init__(parent)
-    self.undo_stack = undo_stack
+    self._root_node = root_node
+    self._undo_stack = undo_stack
+    self._gui_sync_manager = gui_sync_manager
     
     self._selected_node = None
   
@@ -169,13 +173,13 @@ class PropBindersTableModel(QAbstractTableModel):
     # Add menu item for creating a new Property Binder.
     def new_binder_func():
       binder = PropBinder(NEW_BINDER_PROP_NAME, STRING_PROP_TYPE)
-      self.undo_stack.push(AddPropBinderCommand(self, node, index.row() + 1, binder))
+      self._undo_stack.push(AddPropBinderCommand(self._gui_sync_manager, node, index.row() + 1, binder))
     new_binder_action = menu.addAction('&New Property Binder')
     new_binder_action.triggered.connect(new_binder_func)
     
     # Add menu item for deleting the Property Binder.
     def delete_func():
-      self.undo_stack.push(RemovePropBinderCommand(self, node, index.row()))
+      self._undo_stack.push(RemovePropBinderCommand(self._gui_sync_manager, node, index.row()))
     delete_action = menu.addAction('&Delete')
     delete_action.triggered.connect(delete_func)
     
@@ -249,20 +253,22 @@ class PropBindersTableModel(QAbstractTableModel):
     if index.isValid() and 0 <= index.row() < self.rowCount() and 0 <= index.column() < self.columnCount():
       if role == QtCore.Qt.EditRole:
         if index.column() == self.__class__._PROP_NAME_COLUMN_IDX:
-          undo_command = SetPropBinderNameCommand(self, self._selected_node, index.row(), value)
-          self.undo_stack.push(undo_command)
+          undo_command = SetPropBinderNameCommand(self._gui_sync_manager, self._selected_node, index.row(), value)
+          self._undo_stack.push(undo_command)
           return True
         
         elif index.column() == self.__class__._PROP_TYPE_COLUMN_IDX:
           new_prop_type = SUPPORTED_PROP_TYPES[value]
-          undo_command = SetPropBinderTypeCommand(self, self._selected_node, index.row(), new_prop_type)
-          self.undo_stack.push(undo_command)
+          undo_command = SetPropBinderTypeCommand(self._gui_sync_manager, self._selected_node, index.row(),
+            new_prop_type)
+          self._undo_stack.push(undo_command)
           return True
         
         elif index.column() == self.__class__._BIND_FILTER_COLUMN_IDX:
           new_filter = PropBindCriterion(value.split(BIND_FILTER_SEPARATOR))
-          undo_command = SetPropBinderFilterCommand(self, self._selected_node, index.row(), new_filter)
-          self.undo_stack.push(undo_command)
+          undo_command = SetPropBinderFilterCommand(self._gui_sync_manager, self._selected_node, index.row(),
+            new_filter)
+          self._undo_stack.push(undo_command)
           return True
      
     # Return false if the change could not be made.
@@ -291,8 +297,7 @@ class PropBindersTableModel(QAbstractTableModel):
     if data.hasFormat(PROP_BINDER_PATH_MEDIA_TYPE):
       # Make sure the Property Binder being moved belongs to the currently selected Sequence Node.
       binder_path = pickle.loads(data.data(PROP_BINDER_PATH_MEDIA_TYPE).data())
-      if self._selected_node is not self._node_tree_sel_model.model().root_node \
-      .follow_name_path(binder_path.node_path):
+      if self._selected_node is not self._root_node.follow_name_path(binder_path.node_path):
         return False
       
       old_idx = binder_path.binder_idx
@@ -308,14 +313,14 @@ class PropBindersTableModel(QAbstractTableModel):
       
       # Perform the move.
       binder = self._selected_node.prop_binders[old_idx]
-      self.undo_stack.beginMacro("Move Property Binder (Node '{}', Prop '{}')".format(self._selected_node.name,
+      self._undo_stack.beginMacro("Move Property Binder (Node '{}', Prop '{}')".format(self._selected_node.name,
         binder.prop_name))
       try:
-        self.undo_stack.push(RemovePropBinderCommand(self, self._selected_node, old_idx))
-        self.undo_stack.push(AddPropBinderCommand(self, self._selected_node, new_idx, binder))
+        self._undo_stack.push(RemovePropBinderCommand(self._gui_sync_manager, self._selected_node, old_idx))
+        self._undo_stack.push(AddPropBinderCommand(self._gui_sync_manager, self._selected_node, new_idx, binder))
         return True
       finally:
-        self.undo_stack.endMacro()
+        self._undo_stack.endMacro()
     
     return False
   

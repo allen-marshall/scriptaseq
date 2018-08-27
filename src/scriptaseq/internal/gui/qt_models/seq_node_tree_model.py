@@ -11,15 +11,17 @@ from scriptaseq.seq_node import SeqNode
 class SeqNodeTreeModel(QAbstractItemModel):
   """PyQt model for the Sequence Node tree"""
   
-  def __init__(self, root_node, undo_stack, parent=None):
+  def __init__(self, root_node, undo_stack, gui_sync_manager, parent=None):
     """Constructor
     root_node -- Root SeqNode for the Sequence Node tree.
     undo_stack -- QUndoStack to receive undo commands generated through the model.
+    gui_sync_manager -- GUISyncManager in charge of keeping the GUI up to date.
     parent -- Parent QObject for the model.
     """
     super().__init__(parent)
-    self.root_node = root_node
-    self.undo_stack = undo_stack
+    self._root_node = root_node
+    self._undo_stack = undo_stack
+    self._gui_sync_manager = gui_sync_manager
   
   def rename_node(self, node, name):
     """Renames a Sequence Node.
@@ -127,14 +129,14 @@ class SeqNodeTreeModel(QAbstractItemModel):
     def new_child_func():
       child_name = node.suggest_child_name()
       child = SeqNode(child_name)
-      self.undo_stack.push(AddNodeCommand(self, node, child))
+      self._undo_stack.push(AddNodeCommand(self._gui_sync_manager, node, child))
     new_child_action = menu.addAction('&New child')
     new_child_action.triggered.connect(new_child_func)
     
     # Add menu item for deleting the node if it is not the root node.
     if node.parent is not None:
       def delete_func():
-        self.undo_stack.push(RemoveNodeCommand(self, node))
+        self._undo_stack.push(RemoveNodeCommand(self._gui_sync_manager, node))
       delete_action = menu.addAction('&Delete')
       delete_action.triggered.connect(delete_func)
     
@@ -146,7 +148,7 @@ class SeqNodeTreeModel(QAbstractItemModel):
     
     # Construct an index for the root Sequence Node if the parent index is invalid.
     if not parent.isValid():
-      return self.createIndex(row, column, self.root_node)
+      return self.createIndex(row, column, self._root_node)
     
     # Find the Sequence Node referenced by the parent index.
     parent_seq_node = parent.internalPointer()
@@ -205,7 +207,7 @@ class SeqNodeTreeModel(QAbstractItemModel):
         
         # Rename the node.
         try:
-          self.undo_stack.push(RenameNodeCommand(self, index.internalPointer(), value))
+          self._undo_stack.push(RenameNodeCommand(self._gui_sync_manager, index.internalPointer(), value))
           return True
         
         # Renaming may fail due to the parent already having a child with the desired name.
@@ -237,7 +239,7 @@ class SeqNodeTreeModel(QAbstractItemModel):
     if data.hasFormat(SEQ_NODE_PATH_MEDIA_TYPE):
       # Find the node to be moved.
       path_str = data.data(SEQ_NODE_PATH_MEDIA_TYPE).data().decode(MEDIA_STR_ENCODING)
-      node_to_move = self.root_node.follow_name_path(path_str)
+      node_to_move = self._root_node.follow_name_path(path_str)
       
       # Find the new parent node.
       if not parent.isValid():
@@ -258,13 +260,13 @@ class SeqNodeTreeModel(QAbstractItemModel):
         return False
       
       # Perform the move.
-      self.undo_stack.beginMacro("Move node '{}'".format(node_to_move.name))
+      self._undo_stack.beginMacro("Move node '{}'".format(node_to_move.name))
       try:
-        self.undo_stack.push(RemoveNodeCommand(self, node_to_move))
-        self.undo_stack.push(AddNodeCommand(self, new_parent_node, node_to_move))
+        self._undo_stack.push(RemoveNodeCommand(self._gui_sync_manager, node_to_move))
+        self._undo_stack.push(AddNodeCommand(self._gui_sync_manager, new_parent_node, node_to_move))
         return True
       finally:
-        self.undo_stack.endMacro()
+        self._undo_stack.endMacro()
     
     return False
   

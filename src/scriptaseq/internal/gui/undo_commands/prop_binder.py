@@ -1,7 +1,5 @@
 """Undo commands that alter Property Binders."""
 
-from PyQt5.Qt import QUndoCommand
-
 from scriptaseq.internal.gui.undo_commands.id_gen import gen_undo_id
 from scriptaseq.internal.gui.undo_commands.gui_sync_undo_command import GUISyncUndoCommand
 

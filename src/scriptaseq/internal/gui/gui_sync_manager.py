@@ -37,11 +37,11 @@ class GUISyncManager(QObject):
     node_props_widget.gui_sync_manager = self
     prop_val_widget.gui_sync_manager = self
     
-    self._seq_node_tree_model = SeqNodeTreeModel(root_node, undo_stack, self)
+    self._seq_node_tree_model = SeqNodeTreeModel(root_node, undo_stack, self, self)
     node_tree_widget.seqNodeTreeView.setModel(self._seq_node_tree_model)
     self._seq_node_sel_model = node_tree_widget.seqNodeTreeView.selectionModel()
     
-    self._prop_binders_table_model = PropBindersTableModel(undo_stack, self)
+    self._prop_binders_table_model = PropBindersTableModel(root_node, undo_stack, self, self)
     node_props_widget.nodePropsTableView.setModel(self._prop_binders_table_model)
     self._prop_binder_sel_model = node_props_widget.nodePropsTableView.selectionModel()
     
@@ -107,6 +107,7 @@ class GUISyncManager(QObject):
     new_prop_name -- New property name for the binder.
     """
     self._prop_binders_table_model.set_prop_name(node, binder_idx, new_prop_name)
+    self._prop_val_widget.update_gui_binder_info()
   
   def set_prop_type(self, node, binder_idx, new_prop_type):
     """Sets the property type for a Property Binder.
@@ -117,6 +118,7 @@ class GUISyncManager(QObject):
     new_prop_type -- New PropType for the binder.
     """
     self._prop_binders_table_model.set_prop_type(node, binder_idx, new_prop_type)
+    self._prop_val_widget.update_gui_binder_info()
   
   def set_prop_val(self, node, binder_idx, new_prop_val):
     """Sets the property value for a Property Binder.
