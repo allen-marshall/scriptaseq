@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QMainWindow, QUndoStack
 from scriptaseq.internal.generated.qt_ui.main_window import Ui_MainWindow
 from scriptaseq.internal.gui.qt_models.prop_binders_table_model import PropBindersTableModel
 from scriptaseq.internal.gui.qt_models.seq_node_tree_model import SeqNodeTreeModel
-from scriptaseq.internal.gui.qt_ui_types.node_props_widget import NodePropsWidget
+from scriptaseq.internal.gui.qt_ui_types.node_props_widget import NodePropsWidget, NodePropsWidgetDisplayManager
 from scriptaseq.internal.gui.qt_ui_types.node_tree_widget import NodeTreeWidget
 from scriptaseq.prop_binder import PropBinder, STRING_PROP_TYPE, PropBindCriterion, SCRIPTED_VAL_PROP_TYPE,\
   SCRIPT_PROP_TYPE
@@ -47,16 +47,21 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     
     # Initialize GUI components.
     
+    # Initialize Node Tree dockable.
     self._node_tree_widget = NodeTreeWidget(self.dockNodeTree)
     self._node_tree_qt_model = SeqNodeTreeModel(project_root, self._undo_stack, self)
     self._node_tree_widget.node_tree_model = self._node_tree_qt_model
     self.nodeTreePlaceholder.addWidget(self._node_tree_widget)
     
+    # Initialize Node Properties dockable.
     self._node_props_widget = NodePropsWidget(self.dockNodeProps)
     self._node_props_widget.undo_stack = self._undo_stack
     self._node_props_qt_model = PropBindersTableModel(self._node_tree_widget.node_tree_sel_model, self._undo_stack,
       self)
     self._node_props_widget.node_props_model = self._node_props_qt_model
+    self._node_props_wdm = NodePropsWidgetDisplayManager(self._node_props_widget,
+      self._node_tree_widget.node_tree_sel_model, self._undo_stack)
+    self._node_props_widget.node_props_wdm = self._node_props_wdm
     self.nodePropsPlaceholder.addWidget(self._node_props_widget)
   
   def _set_can_redo(self, can_redo):
