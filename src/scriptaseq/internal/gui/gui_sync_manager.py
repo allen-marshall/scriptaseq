@@ -134,12 +134,29 @@ class GUISyncManager(QObject):
     """
     self._prop_binders_table_model.set_bind_filter(node, binder_idx, new_filter)
   
+  def _selected_node(self):
+    """Gets the currently selected Sequence Node.
+    Returns None if no node is selected."""
+    return self._seq_node_tree_model.seq_node_from_qt_index(self._seq_node_sel_model.currentIndex())
+  
+  def _selected_binder_idx(self):
+    """Gets the index of the currently selected Property Binder, within the binder list of the node that owns it.
+    Returns None if no Property Binder is selected.
+    """
+    if self._selected_node() is None:
+      return None
+    
+    return self._prop_binders_table_model.binder_idx_from_qt_index(self._prop_binder_sel_model.currentIndex())
+  
   def _selected_node_changed(self):
     """Called when the selected Sequence Node has changed."""
-    selected_node = self._seq_node_tree_model.seq_node_from_qt_index(self._seq_node_sel_model.currentIndex())
+    selected_node = self._selected_node()
     self._prop_binders_table_model.selected_node_changed(selected_node)
     self._node_props_widget.selected_node_changed(selected_node)
+    self._prop_val_widget.selected_binder_changed(selected_node, None)
   
   def _selected_binder_changed(self):
     """Called when the selected Property Binder has changed."""
-    # TODO: Implement this.
+    selected_node = self._selected_node()
+    selected_binder_idx = self._selected_binder_idx()
+    self._prop_val_widget.selected_binder_changed(selected_node, selected_binder_idx)

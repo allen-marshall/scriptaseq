@@ -55,6 +55,13 @@ class PropBindersTableModel(QAbstractTableModel):
     self._selected_node = node
     self.endResetModel()
   
+  def binder_idx_from_qt_index(self, index):
+    """Extracts the Property Binder index at the specified Qt model index.
+    Returns None if the index does not point to a Property Binder.
+    index -- Qt model index of the Property Binder whose index is to be retrieved.
+    """
+    return index.row() if index.isValid() else None
+  
   def _emit_data_changed(self, row, column):
     """Emits a data changed signal for the item at the specified row and column."""
     changed_index = self.index(row, column)
