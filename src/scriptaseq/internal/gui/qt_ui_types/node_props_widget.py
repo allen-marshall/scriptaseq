@@ -1,4 +1,4 @@
-"""Defines the main node tree widget."""
+"""Defines the main node properties widget."""
 
 from PyQt5.Qt import QWidget, QPoint
 from sortedcontainers.sortedset import SortedSet

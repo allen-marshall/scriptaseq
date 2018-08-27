@@ -97,6 +97,24 @@
     </layout>
    </widget>
   </widget>
+  <widget class="QDockWidget" name="dockPropVal">
+   <property name="floating">
+    <bool>false</bool>
+   </property>
+   <property name="windowTitle">
+    <string>Property Value Editor</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents">
+    <layout class="QHBoxLayout" name="horizontalLayout_5">
+     <item>
+      <layout class="QHBoxLayout" name="propValPlaceholder"/>
+     </item>
+    </layout>
+   </widget>
+  </widget>
   <action name="actionOpenProject">
    <property name="text">
     <string>&amp;Open...</string>
@@ -141,6 +159,7 @@
     <string>Save &amp;As...</string>
    </property>
   </action>
+  <zorder>dockNodeProps</zorder>
  </widget>
  <resources/>
  <connections/>
