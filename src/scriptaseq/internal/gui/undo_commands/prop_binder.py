@@ -3,24 +3,24 @@
 from PyQt5.Qt import QUndoCommand
 
 from scriptaseq.internal.gui.undo_commands.id_gen import gen_undo_id
+from scriptaseq.internal.gui.undo_commands.gui_sync_undo_command import GUISyncUndoCommand
 
 
-class AddPropBinderCommand(QUndoCommand):
+class AddPropBinderCommand(GUISyncUndoCommand):
   """Undo command for adding a Property Binder to a Sequence Node"""
   
   _undo_id = gen_undo_id()
   
-  def __init__(self, node_props_model, node, binder_idx, binder, parent=None):
+  def __init__(self, gui_sync_manager, node, binder_idx, binder, parent=None):
     """Constructor
-    node_props_model -- PropBindersTableModel in charge of changes to Property Binders.
+    gui_sync_manager -- GUISyncManager in charge of keeping the GUI up to date.
     node -- The Sequence Node to which the Property Binder will be directly attached.
     binder_idx -- Index at which to insert the Property Binder, within the Sequence Node's Property Binder list.
     binder -- Property Binder to add.
     parent -- Parent QUndoCommand.
     """
-    super().__init__(parent)
+    super().__init__(gui_sync_manager, parent)
     
-    self._node_props_model = node_props_model
     self._node = node
     self._binder_idx = binder_idx
     self._binder = binder
@@ -31,26 +31,25 @@ class AddPropBinderCommand(QUndoCommand):
     return self.__class__._undo_id
   
   def redo(self):
-    self._node_props_model.add_prop_binder(self._node, self._binder_idx, self._binder)
+    self.gui_sync_manager.add_prop_binder(self._node, self._binder_idx, self._binder)
   
   def undo(self):
-    self._node_props_model.remove_prop_binder(self._node, self._binder_idx)
+    self.gui_sync_manager.remove_prop_binder(self._node, self._binder_idx)
 
-class RemovePropBinderCommand(QUndoCommand):
+class RemovePropBinderCommand(GUISyncUndoCommand):
   """Undo command for removing a Property Binder from a Sequence Node"""
   
   _undo_id = gen_undo_id()
   
-  def __init__(self, node_props_model, node, binder_idx, parent=None):
+  def __init__(self, gui_sync_manager, node, binder_idx, parent=None):
     """Constructor
-    node_props_model -- PropBindersTableModel in charge of changes to Property Binders.
+    gui_sync_manager -- GUISyncManager in charge of keeping the GUI up to date.
     node -- The Sequence Node to which the Property Binder is directly attached.
     binder_idx -- Index of the Property Binder to remove, within the Sequence Node's Property Binder list.
     parent -- Parent QUndoCommand.
     """
-    super().__init__(parent)
+    super().__init__(gui_sync_manager, parent)
     
-    self._node_props_model = node_props_model
     self._node = node
     self._binder_idx = binder_idx
     
@@ -63,27 +62,26 @@ class RemovePropBinderCommand(QUndoCommand):
     return self.__class__._undo_id
   
   def redo(self):
-    self._node_props_model.remove_prop_binder(self._node, self._binder_idx)
+    self.gui_sync_manager.remove_prop_binder(self._node, self._binder_idx)
   
   def undo(self):
-    self._node_props_model.add_prop_binder(self._node, self._binder_idx, self._binder)
+    self.gui_sync_manager.add_prop_binder(self._node, self._binder_idx, self._binder)
 
-class SetPropBinderNameCommand(QUndoCommand):
+class SetPropBinderNameCommand(GUISyncUndoCommand):
   """Undo command for modifying the property name in a Property Binder"""
   
   _undo_id = gen_undo_id()
   
-  def __init__(self, node_props_model, node, binder_idx, prop_name, parent=None):
+  def __init__(self, gui_sync_manager, node, binder_idx, prop_name, parent=None):
     """Constructor
-    node_props_model -- PropBindersTableModel in charge of changes to Property Binders.
+    gui_sync_manager -- GUISyncManager in charge of keeping the GUI up to date.
     node -- The Sequence Node to which the Property Binder is directly attached.
     binder_idx -- Index of the Property Binder to change, within the Sequence Node's Property Binder list.
     prop_name -- The new property name for the Property Binder.
     parent -- Parent QUndoCommand.
     """
-    super().__init__(parent)
+    super().__init__(gui_sync_manager, parent)
     
-    self._node_props_model = node_props_model
     self._node = node
     self._binder_idx = binder_idx
     self._new_prop_name = prop_name
@@ -97,27 +95,26 @@ class SetPropBinderNameCommand(QUndoCommand):
     return self.__class__._undo_id
   
   def redo(self):
-    self._node_props_model.set_prop_name(self._node, self._binder_idx, self._new_prop_name)
+    self.gui_sync_manager.set_prop_name(self._node, self._binder_idx, self._new_prop_name)
   
   def undo(self):
-    self._node_props_model.set_prop_name(self._node, self._binder_idx, self._old_prop_name)
+    self.gui_sync_manager.set_prop_name(self._node, self._binder_idx, self._old_prop_name)
 
-class SetPropBinderTypeCommand(QUndoCommand):
+class SetPropBinderTypeCommand(GUISyncUndoCommand):
   """Undo command for modifying the property type in a Property Binder"""
   
   _undo_id = gen_undo_id()
   
-  def __init__(self, node_props_model, node, binder_idx, prop_type, parent=None):
+  def __init__(self, gui_sync_manager, node, binder_idx, prop_type, parent=None):
     """Constructor
-    node_props_model -- PropBindersTableModel in charge of changes to Property Binders.
+    gui_sync_manager -- GUISyncManager in charge of keeping the GUI up to date.
     node -- The Sequence Node to which the Property Binder is directly attached.
     binder_idx -- Index of the Property Binder to change, within the Sequence Node's Property Binder list.
     prop_type -- The new property type for the Property Binder.
     parent -- Parent QUndoCommand.
     """
-    super().__init__(parent)
+    super().__init__(gui_sync_manager, parent)
     
-    self._node_props_model = node_props_model
     self._node = node
     self._binder_idx = binder_idx
     self._new_prop_type = prop_type
@@ -134,28 +131,27 @@ class SetPropBinderTypeCommand(QUndoCommand):
     return self.__class__._undo_id
   
   def redo(self):
-    self._node_props_model.set_prop_type(self._node, self._binder_idx, self._new_prop_type)
+    self.gui_sync_manager.set_prop_type(self._node, self._binder_idx, self._new_prop_type)
   
   def undo(self):
-    self._node_props_model.set_prop_type(self._node, self._binder_idx, self._old_prop_type)
-    self._node_props_model.set_prop_val(self._node, self._binder_idx, self._old_prop_val)
+    self.gui_sync_manager.set_prop_type(self._node, self._binder_idx, self._old_prop_type)
+    self.gui_sync_manager.set_prop_val(self._node, self._binder_idx, self._old_prop_val)
 
-class SetPropBinderFilterCommand(QUndoCommand):
+class SetPropBinderFilterCommand(GUISyncUndoCommand):
   """Undo command for modifying the binding filter in a Property Binder"""
   
   _undo_id = gen_undo_id()
   
-  def __init__(self, node_props_model, node, binder_idx, bind_filter, parent=None):
+  def __init__(self, gui_sync_manager, node, binder_idx, bind_filter, parent=None):
     """Constructor
-    node_props_model -- PropBindersTableModel in charge of changes to Property Binders.
+    gui_sync_manager -- GUISyncManager in charge of keeping the GUI up to date.
     node -- The Sequence Node to which the Property Binder is directly attached.
     binder_idx -- Index of the Property Binder to change, within the Sequence Node's Property Binder list.
     bind_filter -- The new PropBindCriterion for the Property Binder.
     parent -- Parent QUndoCommand.
     """
-    super().__init__(parent)
+    super().__init__(gui_sync_manager, parent)
     
-    self._node_props_model = node_props_model
     self._node = node
     self._binder_idx = binder_idx
     self._new_bind_filter = bind_filter
@@ -169,7 +165,7 @@ class SetPropBinderFilterCommand(QUndoCommand):
     return self.__class__._undo_id
   
   def redo(self):
-    self._node_props_model.set_bind_filter(self._node, self._binder_idx, self._new_bind_filter)
+    self.gui_sync_manager.set_bind_filter(self._node, self._binder_idx, self._new_bind_filter)
   
   def undo(self):
-    self._node_props_model.set_bind_filter(self._node, self._binder_idx, self._old_bind_filter)
+    self.gui_sync_manager.set_bind_filter(self._node, self._binder_idx, self._old_bind_filter)

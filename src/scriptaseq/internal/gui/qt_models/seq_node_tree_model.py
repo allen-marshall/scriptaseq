@@ -80,6 +80,7 @@ class SeqNodeTreeModel(QAbstractItemModel):
     Raises ValueError if the node is the root.
     Note: This method generally should only be called from within a QUndoCommand, as the user will not be able to undo
     it otherwise.
+    node -- Sequence Node to remove.
     """
     if node.parent is None:
       raise ValueError('Cannot remove root node')
@@ -126,14 +127,14 @@ class SeqNodeTreeModel(QAbstractItemModel):
     def new_child_func():
       child_name = node.suggest_child_name()
       child = SeqNode(child_name)
-      self.undo_stack.push(AddNodeCommand(self, node.name_path, child))
+      self.undo_stack.push(AddNodeCommand(self, node, child))
     new_child_action = menu.addAction('&New child')
     new_child_action.triggered.connect(new_child_func)
     
     # Add menu item for deleting the node if it is not the root node.
     if node.parent is not None:
       def delete_func():
-        self.undo_stack.push(RemoveNodeCommand(self, node.name_path))
+        self.undo_stack.push(RemoveNodeCommand(self, node))
       delete_action = menu.addAction('&Delete')
       delete_action.triggered.connect(delete_func)
     
@@ -204,7 +205,7 @@ class SeqNodeTreeModel(QAbstractItemModel):
         
         # Rename the node.
         try:
-          self.undo_stack.push(RenameNodeCommand(self, index.internalPointer().name_path, value))
+          self.undo_stack.push(RenameNodeCommand(self, index.internalPointer(), value))
           return True
         
         # Renaming may fail due to the parent already having a child with the desired name.
@@ -259,8 +260,8 @@ class SeqNodeTreeModel(QAbstractItemModel):
       # Perform the move.
       self.undo_stack.beginMacro("Move node '{}'".format(node_to_move.name))
       try:
-        self.undo_stack.push(RemoveNodeCommand(self, node_to_move.name_path))
-        self.undo_stack.push(AddNodeCommand(self, new_parent_node.name_path, node_to_move))
+        self.undo_stack.push(RemoveNodeCommand(self, node_to_move))
+        self.undo_stack.push(AddNodeCommand(self, new_parent_node, node_to_move))
         return True
       finally:
         self.undo_stack.endMacro()

@@ -9,4 +9,6 @@ class PropValWidget(QWidget, Ui_PropValWidget):
     QWidget.__init__(self, parent)
     self.setupUi(self)
     
+    self.gui_sync_manager = None
+    
     # TODO: Build the editors for the different property types.

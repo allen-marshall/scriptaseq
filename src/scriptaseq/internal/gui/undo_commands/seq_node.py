@@ -1,31 +1,29 @@
 """Undo commands that alter certain properties of the active Sequence Node"""
 
-from PyQt5.Qt import QUndoCommand
 import copy
 from sortedcontainers.sortedset import SortedSet
 
+from scriptaseq.internal.gui.undo_commands.gui_sync_undo_command import GUISyncUndoCommand
 from scriptaseq.internal.gui.undo_commands.id_gen import gen_undo_id
 
 
-class RenameNodeCommand(QUndoCommand):
+class RenameNodeCommand(GUISyncUndoCommand):
   """Undo command for modifying a Sequence Node's name"""
   
   _undo_id = gen_undo_id()
   
-  def __init__(self, node_tree_model, node_path, new_name, parent=None):
+  def __init__(self, gui_sync_manager, node, new_name, parent=None):
     """Constructor
     Raises ValueError if it is determined that the command will fail.
-    node_tree_model -- SeqNodeTreeModel that owns the node tree.
-    node_path -- Path to the Sequence Node to rename.
+    gui_sync_manager -- GUISyncManager in charge of keeping the GUI up to date.
+    node -- Sequence Node to rename.
     new_name -- New name for the Sequence Node.
     parent -- Parent QUndoCommand.
     """
-    super().__init__(parent)
-    
-    self._node_tree_model = node_tree_model
+    super().__init__(gui_sync_manager, parent)
     
     # Check if the operation can be performed.
-    self._node_to_rename = node_tree_model.root_node.follow_name_path(node_path)
+    self._node_to_rename = node
     self._old_name = copy.deepcopy(self._node_to_rename.name)
     self._new_name = copy.deepcopy(new_name)
     if self._node_to_rename.parent is None:
@@ -40,32 +38,30 @@ class RenameNodeCommand(QUndoCommand):
     return self.__class__._undo_id
   
   def redo(self):
-    self._node_tree_model.rename_node(self._node_to_rename, self._new_name)
+    self.gui_sync_manager.rename_node(self._node_to_rename, self._new_name)
   
   def undo(self):
-    self._node_tree_model.rename_node(self._node_to_rename, self._old_name)
+    self.gui_sync_manager.rename_node(self._node_to_rename, self._old_name)
 
-class AddNodeCommand(QUndoCommand):
+class AddNodeCommand(GUISyncUndoCommand):
   """Undo command for adding a Sequence Node to the node tree"""
   
   _undo_id = gen_undo_id()
   
-  def __init__(self, node_tree_model, parent_node_path, new_node, parent=None):
+  def __init__(self, gui_sync_manager, parent_node, new_node, parent=None):
     """Constructor
     Raises ValueError if it is determined that the command will fail.
-    node_tree_model -- SeqNodeTreeModel that owns the node tree.
-    parent_node_path -- Path to the parent Sequence Node to which the new node will be attached.
+    gui_sync_manager -- GUISyncManager in charge of keeping the GUI up to date.
+    parent_node-- Parent Sequence Node to which the new node will be attached.
     new_node -- Sequence Node to add to the tree. Must not already have a parent.
     parent -- Parent QUndoCommand.
     """
-    super().__init__(parent)
-    
-    self._node_tree_model = node_tree_model
+    super().__init__(gui_sync_manager, parent)
     
     # Check if the operation can be performed.
     if new_node.parent is not None:
       raise ValueError('Cannot add a node that already has a parent')
-    self._parent_node = node_tree_model.root_node.follow_name_path(parent_node_path)
+    self._parent_node = parent_node
     if new_node.name in self._parent_node.children:
       raise ValueError("Parent node already has a child named '{}'".format(new_node.name))
     self._new_node = new_node
@@ -76,29 +72,27 @@ class AddNodeCommand(QUndoCommand):
     return self.__class__._undo_id
   
   def redo(self):
-    self._node_tree_model.add_node(self._parent_node, self._new_node)
+    self.gui_sync_manager.add_node(self._parent_node, self._new_node)
   
   def undo(self):
-    self._node_tree_model.remove_node(self._new_node)
+    self.gui_sync_manager.remove_node(self._new_node)
 
-class RemoveNodeCommand(QUndoCommand):
+class RemoveNodeCommand(GUISyncUndoCommand):
   """Undo command for removing a Sequence Node from the node tree"""
   
   _undo_id = gen_undo_id()
   
-  def __init__(self, node_tree_model, node_path, parent=None):
+  def __init__(self, gui_sync_manager, node, parent=None):
     """Constructor
     Raises ValueError if it is determined that the command will fail.
-    node_tree_model -- SeqNodeTreeModel that owns the node tree.
-    node_path -- Path to the Sequence Node to be removed.
+    gui_sync_manager -- GUISyncManager in charge of keeping the GUI up to date.
+    node -- Sequence Node to be removed.
     parent -- Parent QUndoCommand.
     """
-    super().__init__(parent)
-    
-    self._node_tree_model = node_tree_model
+    super().__init__(gui_sync_manager, parent)
     
     # Check if the operation can be performed.
-    self._node_to_remove = node_tree_model.root_node.follow_name_path(node_path)
+    self._node_to_remove = node
     if self._node_to_remove.parent is None:
       raise ValueError('Cannot remove root node')
     self._parent_node = self._node_to_remove.parent
@@ -109,26 +103,25 @@ class RemoveNodeCommand(QUndoCommand):
     return self.__class__._undo_id
   
   def redo(self):
-    self._node_tree_model.remove_node(self._node_to_remove)
+    self.gui_sync_manager.remove_node(self._node_to_remove)
   
   def undo(self):
-    self._node_tree_model.add_node(self._parent_node, self._node_to_remove)
+    self.gui_sync_manager.add_node(self._parent_node, self._node_to_remove)
 
-class SetNodeTagsCommand(QUndoCommand):
+class SetNodeTagsCommand(GUISyncUndoCommand):
   """Undo command for setting a Sequence Node's tags."""
   
   _undo_id = gen_undo_id()
   
-  def __init__(self, node_props_wdm, node, tags, parent=None):
+  def __init__(self, gui_sync_manager, node, tags, parent=None):
     """Constructor
-    node_props_wdm -- NodePropsWidgetDisplayManager in charge of node tags.
+    gui_sync_manager -- GUISyncManager in charge of keeping the GUI up to date.
     node -- Sequence Node whose tags are to be changed.
     tags -- Iterable containing the new tags for the Sequence Node.
     parent -- Parent QUndoCommand.
     """
-    super().__init__(parent)
+    super().__init__(gui_sync_manager, parent)
     
-    self._node_props_wdm = node_props_wdm
     self._node = node
     self._new_tags = SortedSet(tags)
     self._old_tags = copy.deepcopy(node.tags)
@@ -140,7 +133,7 @@ class SetNodeTagsCommand(QUndoCommand):
     return self.__class__._undo_id
   
   def redo(self):
-    self._node_props_wdm.set_node_tags(self._node, self._new_tags)
+    self.gui_sync_manager.set_node_tags(self._node, self._new_tags)
   
   def undo(self):
-    self._node_props_wdm.set_node_tags(self._node, self._old_tags)
+    self.gui_sync_manager.set_node_tags(self._node, self._old_tags)

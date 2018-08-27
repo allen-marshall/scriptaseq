@@ -9,24 +9,8 @@ class NodeTreeWidget(QWidget, Ui_NodeTreeWidget):
   def __init__(self, parent=None):
     QWidget.__init__(self, parent)
     self.setupUi(self)
-  
-  @property
-  def node_tree_model(self):
-    """Property containing the Qt item model to show in the node tree view."""
-    return self.seqNodeTreeView.model()
-  
-  @node_tree_model.setter
-  def node_tree_model(self, node_tree_model):
-    self.seqNodeTreeView.setModel(node_tree_model)
-  
-  @property
-  def node_tree_sel_model(self):
-    """Property containing the Qt selection model for the node tree view."""
-    return self.seqNodeTreeView.selectionModel()
-  
-  @node_tree_sel_model.setter
-  def node_tree_sel_model(self, node_tree_sel_model):
-    self.seqNodeTreeView.setSelectionModel(node_tree_sel_model)
+    
+    self.gui_sync_manager = None
   
   def contextMenuEvent(self, event):
     # Get event position relative to the node tree view.

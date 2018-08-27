@@ -36,27 +36,23 @@ class PropBindersTableModel(QAbstractTableModel):
   # Column index for the property value column.
   _PROP_VALUE_COLUMN_IDX = 3
   
-  def __init__(self, node_tree_sel_model, undo_stack, parent=None):
+  def __init__(self, undo_stack, parent=None):
     """Constructor
     node_tree_sel_model -- QItemSelectionModel from which the selected node will be determined.
     undo_stack -- QUndoStack to receive undo commands generated through the model.
     parent -- Parent QObject for the model.
     """
     super().__init__(parent)
-    self._node_tree_sel_model = node_tree_sel_model
     self.undo_stack = undo_stack
     
-    # Connect signals to update the table when the selected node changes.
-    self._node_tree_sel_model.currentChanged.connect(lambda current, previous: self._update_selected_node())
-    
-    # Initialize selected node.
-    self._update_selected_node()
+    self._selected_node = None
   
-  def _update_selected_node(self):
-    """Updates the model's internal reference to the currently selected sequence node."""
+  def selected_node_changed(self, node):
+    """Notifies the model that the selected Sequence Node has changed.
+    node -- The newly selected Sequence Node.
+    """
     self.beginResetModel()
-    self._selected_node = self._node_tree_sel_model.model().seq_node_from_qt_index(
-      self._node_tree_sel_model.currentIndex())
+    self._selected_node = node
     self.endResetModel()
   
   def _emit_data_changed(self, row, column):
@@ -71,7 +67,7 @@ class PropBindersTableModel(QAbstractTableModel):
     node -- Sequence Node that will own the Property Binder.
     binder_idx -- Desired index of the binder in the node's Property Binder list.
     binder -- New binder to add to the Sequence Node.
-    """ 
+    """
     self.beginInsertRows(QModelIndex(), binder_idx, binder_idx)
     try:
       node.prop_binders.insert(binder_idx, binder)
