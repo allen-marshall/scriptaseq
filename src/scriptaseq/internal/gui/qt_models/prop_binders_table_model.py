@@ -163,25 +163,25 @@ class PropBindersTableModel(QAbstractTableModel):
     index -- QModelIndex pointing to the item for which the context menu should be created.
     parent -- Parent widget for the context menu.
     """
-    if not index.isValid():
-      return None
     
     node = self._selected_node
     
     menu = QMenu(parent)
     
     # Add menu item for creating a new Property Binder.
+    new_binder_row = index.row() + 1 if index.isValid() else len(node.prop_binders)
     def new_binder_func():
       binder = PropBinder(NEW_BINDER_PROP_NAME, STRING_PROP_TYPE)
-      self._undo_stack.push(AddPropBinderCommand(self._gui_sync_manager, node, index.row() + 1, binder))
+      self._undo_stack.push(AddPropBinderCommand(self._gui_sync_manager, node, new_binder_row, binder))
     new_binder_action = menu.addAction('&New Property Binder')
     new_binder_action.triggered.connect(new_binder_func)
     
     # Add menu item for deleting the Property Binder.
-    def delete_func():
-      self._undo_stack.push(RemovePropBinderCommand(self._gui_sync_manager, node, index.row()))
-    delete_action = menu.addAction('&Delete')
-    delete_action.triggered.connect(delete_func)
+    if index.isValid():
+      def delete_func():
+        self._undo_stack.push(RemovePropBinderCommand(self._gui_sync_manager, node, index.row()))
+      delete_action = menu.addAction('&Delete')
+      delete_action.triggered.connect(delete_func)
     
     return menu
   

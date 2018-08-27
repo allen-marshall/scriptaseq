@@ -57,11 +57,12 @@ class NodePropsWidget(QWidget, Ui_NodePropsWidget):
         self.undo_stack.push(SetNodeTagsCommand(self.gui_sync_manager, self._selected_node, new_tags))
   
   def contextMenuEvent(self, event):
-    # Get event position relative to the node properties view.
+    # Get event position relative to the node properties table.
     props_view_pos = event.globalPos() - self.nodePropsTableView.viewport().mapToGlobal(QPoint())
     
-    model_index = self.nodePropsTableView.indexAt(props_view_pos)
-    if model_index.isValid():
+    # If the event occurred inside the node properties table, show a context menu for the table.
+    if self.nodePropsTableView.viewport().rect().contains(props_view_pos):
+      model_index = self.nodePropsTableView.indexAt(props_view_pos)
       menu = self.nodePropsTableView.model().make_context_menu(model_index, self)
       if menu is not None:
         event.setAccepted(True)
