@@ -15,6 +15,9 @@ from scriptaseq.util.scripts import UserScriptError
 # Separator string for displaying binding filters as strings.
 BIND_FILTER_SEPARATOR = ','
 
+# Initial property name to use when creating a new Property Binder.
+NEW_BINDER_PROP_NAME = 'prop'
+
 class PropBindersTableModel(QAbstractTableModel):
   """Qt table model for a table of Property Binders"""
   
@@ -162,7 +165,7 @@ class PropBindersTableModel(QAbstractTableModel):
     
     # Add menu item for creating a new Property Binder.
     def new_binder_func():
-      binder = PropBinder('', STRING_PROP_TYPE)
+      binder = PropBinder(NEW_BINDER_PROP_NAME, STRING_PROP_TYPE)
       self.undo_stack.push(AddPropBinderCommand(self, node, index.row() + 1, binder))
     new_binder_action = menu.addAction('&New Property Binder')
     new_binder_action.triggered.connect(new_binder_func)
