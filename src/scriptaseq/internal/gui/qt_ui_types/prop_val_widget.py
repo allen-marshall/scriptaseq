@@ -2,6 +2,9 @@
 from PyQt5.Qt import QWidget
 
 from scriptaseq.internal.generated.qt_ui.prop_val_widget import Ui_PropValWidget
+from scriptaseq.internal.gui.qt_ui_types.val_editor_not_implemented_widget import ValEditorNotImplementedWidget
+from scriptaseq.internal.gui.qt_ui_types.val_editor_not_selected_widget import ValEditorNotSelectedWidget
+from scriptaseq.prop_binder import SCRIPT_PROP_TYPE, STRING_PROP_TYPE, SCRIPTED_VAL_PROP_TYPE
 
 
 class PropValWidget(QWidget, Ui_PropValWidget):
@@ -13,7 +16,18 @@ class PropValWidget(QWidget, Ui_PropValWidget):
     self._selected_node = None
     self._selected_binder_idx = None
     
-    # TODO: Build the editors for the different property types.
+    # Build the editors for the different property types.
+    self._editor_not_selected_idx = self.stackedEditorWidget.addWidget(ValEditorNotSelectedWidget(self))
+    self._editor_not_implemented_idx = self.stackedEditorWidget.addWidget(ValEditorNotImplementedWidget(self))
+    
+    self.stackedEditorWidget.setCurrentIndex(self._editor_not_selected_idx)
+    
+    # Keep track of what editor to show for each supported property type.
+    self._editor_idx_for_type = {
+      STRING_PROP_TYPE : self._editor_not_implemented_idx,
+      SCRIPTED_VAL_PROP_TYPE : self._editor_not_implemented_idx,
+      SCRIPT_PROP_TYPE : self._editor_not_implemented_idx,
+    }
   
   def selected_binder_changed(self, node, binder_idx):
     """Notifies the widget that the selected Property Binder has changed.
@@ -25,6 +39,7 @@ class PropValWidget(QWidget, Ui_PropValWidget):
     self._selected_binder_idx = binder_idx
     self.update_gui_node_path()
     self.update_gui_binder_info()
+    self.update_editor()
   
   def update_gui_node_path(self):
     """Updates the GUI to show the path string for the currently selected node."""
@@ -41,3 +56,23 @@ class PropValWidget(QWidget, Ui_PropValWidget):
       binder = self._selected_node.prop_binders[self._selected_binder_idx]
       self.selectedBinderLabel.setText("{} ('{}', {})".format(str(self._selected_binder_idx), binder.prop_name,
         binder.prop_type.name))
+  
+  def update_editor(self):
+    """Updates the GUI to show the appropriate property value editor and editor contents.
+    Should be called when the Property Binder selection changes or the selected Property Binder has its type or value
+    changed.
+    """
+    if self._selected_node is None or self._selected_binder_idx is None:
+      self.stackedEditorWidget.setCurrentIndex(self._editor_not_selected_idx)
+    
+    else:
+      prop_binder = self._selected_node.prop_binders[self._selected_binder_idx]
+      
+      # Display the appropriate editor for the property type.
+      if prop_binder.prop_type not in self._editor_idx_for_type:
+        self.stackedEditorWidget.setCurrentIndex(self._editor_not_implemented_idx)
+      else:
+        self.stackedEditorWidget.setCurrentIndex(self._editor_idx_for_type[prop_binder.prop_type])
+      
+      # Update the editor contents.
+      self.stackedEditorWidget.currentWidget().update_editor(self._selected_node, self._selected_binder_idx)

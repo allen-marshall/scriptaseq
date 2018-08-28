@@ -121,6 +121,7 @@ class GUISyncManager(QObject):
     """
     self._prop_binders_table_model.set_prop_type(node, binder_idx, new_prop_type)
     self._prop_val_widget.update_gui_binder_info()
+    self._prop_val_widget.update_editor()
   
   def set_prop_val(self, node, binder_idx, new_prop_val):
     """Sets the property value for a Property Binder.
@@ -129,6 +130,7 @@ class GUISyncManager(QObject):
     new_prop_val -- New property value for the binder.
     """
     self._prop_binders_table_model.set_prop_val(node, binder_idx, new_prop_val)
+    self._prop_val_widget.update_editor()
   
   def set_bind_filter(self, node, binder_idx, new_filter):
     """Sets the binding filter for a Property Binder.
