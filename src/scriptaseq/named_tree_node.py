@@ -48,27 +48,33 @@ class NamedTreeNode:
   
   def __init__(self, name, can_have_children=True, parent=None):
     """Constructor.
-    Raises ValueError if the name is invalid or the parent node already has another child with the specified name.
+    Raises ValueError if the name is invalid, the parent node already has another child with the specified name, or the
+    parent node is not allowed to have children.
     name -- Name for the new node.
     can_have_children -- Indicates whether the node is allowed to have children.
     parent -- NamedTreeNode reference indicating the parent to which the node will be attached as a child. The default
       value is None, meaning the node will have no parent and will be considered a root node.
     """
+    self._parent = None
+    self._children = SortedDict()
     self.name = name
     self.parent = parent
     self.can_have_children = can_have_children
-    self._children = SortedDict()
   
   @property
   def name(self):
     """Property containing the node's name.
-    Setting this property will raise ValueError if the new name contains a disallowed substring, or if the node's parent
-    already has another child with the desired name.
+    Setting this property will raise ValueError if the new name is empty or contains a disallowed substring, or if the
+    node's parent already has another child with the desired name.
     """
     return self._name
   
   @name.setter
   def name(self, name):
+    # Check if the name is empty.
+    if name == '':
+      raise ValueError('Node name must not be empty.')
+    
     # Check if the name contains a disallowed substring.
     for substring in NAME_DISALLOWED_SUBSTRINGS:
       if substring in name:
@@ -123,7 +129,8 @@ class NamedTreeNode:
   def can_have_children(self, can_have_children):
     # If setting to false, remove any existing children.
     if not can_have_children:
-      self._children.clear()
+      for child in list(self._children.values()):
+        child.parent = None
     
     self._can_have_children = bool(can_have_children)
   
@@ -198,7 +205,7 @@ class NamedTreeNode:
       return []
     
     # For a non-root node, use the parent node's absolute path with this node's name appended.
-    result = self.parent._abs_path_list()
+    result = self.parent._abs_name_path_list()
     result += [self.name]
     return result
   
@@ -217,5 +224,5 @@ class NamedTreeNode:
     # Check if adding the child would create an inheritance cycle.
     if self is node:
       raise ValueError('Cannot make a node a child of itself.')
-    if self in node.ancestors:
+    if node in self.ancestors:
       raise ValueError('Operation would create a cycle in the tree.')
