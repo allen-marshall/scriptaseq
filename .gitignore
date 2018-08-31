@@ -4,7 +4,8 @@
 .settings
 
 # Generated source files
-/src/scriptaseq/internal/generated/qt_ui/
+/src/scriptaseq/internal/generated/qt_ui/**
+!/src/scriptaseq/internal/generated/qt_ui/__init__.py
 
 # Compiled Qt files
 *.qmlc
