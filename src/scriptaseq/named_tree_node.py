@@ -198,6 +198,37 @@ class NamedTreeNode:
     
     return curr_node
   
+  def idx_in_parent(self):
+    """Determines the numerical index at which this child node can be found in its parent.
+    Returns None if this node has no parent.
+    """
+    if self.parent is None:
+      return None
+    else:
+      return self.parent.child_idx_from_name(self.name)
+  
+  def child_at_idx(self, idx):
+    """Finds the child at the specified numerical index in this node's child ordering.
+    idx -- Index to query.
+    """
+    return self._children.peekitem(idx)[1]
+  
+  def child_idx_from_name(self, child_name):
+    """Finds the index of the node with the specified name in this node's child ordering.
+    If this node has no child with the specified name, this function will instead predict what the index would be if a
+    child of the specified name were to be added.
+    child_name -- Name of the child to query, or the prospective child to be added.
+    """
+    # If this node has a child with the specified name, return the index of that child.
+    if child_name in self._children:
+      return self._children.index(child_name)
+    
+    # Otherwise, predict what the insertion index would be if a child with the specified name were added.
+    # TODO: This could probably be made more efficient.
+    children_copy = self._children.copy()
+    children_copy[child_name] = None
+    return children_copy.index(child_name)
+  
   def _abs_name_path_list(self):
     """Gets the absolute path to this node, as a mutable list of node names."""
     # For a root node, use an empty path.

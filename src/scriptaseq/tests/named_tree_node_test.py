@@ -262,6 +262,32 @@ class NamedTreeNodeTest(TestCase):
     self.assertRaises(ValueError, resolve, self._tree_4node_child1)
     self.assertRaises(ValueError, resolve, self._tree_4node_grandchild)
   
+  def test_idx_in_parent(self):
+    self.assertIsNone(self._tree_1node.idx_in_parent())
+    self.assertIsNone(self._tree_4node_root.idx_in_parent())
+    self.assertEqual(self._tree_4node_child0.idx_in_parent(), 0)
+    self.assertEqual(self._tree_4node_child1.idx_in_parent(), 1)
+    self.assertEqual(self._tree_4node_grandchild.idx_in_parent(), 0)
+  
+  def test_child_at_idx_success(self):
+    self.assertIs(self._tree_4node_root.child_at_idx(0), self._tree_4node_child0)
+    self.assertIs(self._tree_4node_root.child_at_idx(1), self._tree_4node_child1)
+    self.assertIs(self._tree_4node_root.child_at_idx(-1), self._tree_4node_child1)
+    self.assertIs(self._tree_4node_root.child_at_idx(-2), self._tree_4node_child0)
+  
+  def test_child_at_idx_fail(self):
+    def find_child(parent, idx):
+      parent.child_at_idx(idx)
+    self.assertRaises(IndexError, find_child, self._tree_1node, 0)
+    self.assertRaises(IndexError, find_child, self._tree_4node_root, 2)
+    self.assertRaises(IndexError, find_child, self._tree_4node_root, -3)
+  
+  def test_child_idx_from_name(self):
+    self.assertEqual(self._tree_1node.child_idx_from_name('nobody'), 0)
+    self.assertEqual(self._tree_4node_root.child_idx_from_name('child0def'), 0)
+    self.assertEqual(self._tree_4node_root.child_idx_from_name('child1ghi'), 1)
+    self.assertEqual(self._tree_4node_root.child_idx_from_name('child0deff'), 1)
+  
   def test_sorting(self):
     middle_child = NamedTreeNode('child0defghi', parent=self._tree_4node_root)
     self.assertSequenceEqual(self._tree_4node_root.children.items(),
