@@ -3,7 +3,7 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../src/scriptaseq/internal/gui/qt_ui_types/main_window.py" line="16"/>
+        <location filename="../src/scriptaseq/internal/generated/qt_ui/main_window.py" line="111"/>
         <source>ScriptASeq</source>
         <translation type="unfinished"></translation>
     </message>
@@ -65,6 +65,44 @@
     <message>
         <location filename="../src/scriptaseq/internal/generated/qt_ui/main_window.py" line="123"/>
         <source>Save &amp;As...</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>NamedTreeNode</name>
+    <message>
+        <location filename="../src/scriptaseq/named_tree_node.py" line="77"/>
+        <source>Node name must not be empty.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/scriptaseq/named_tree_node.py" line="82"/>
+        <source>Node name must not contain &apos;{}&apos;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/scriptaseq/named_tree_node.py" line="257"/>
+        <source>Node &apos;{}&apos; already has a child named &apos;{}&apos;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/scriptaseq/named_tree_node.py" line="199"/>
+        <source>Failed to resolve path &apos;{}&apos;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/scriptaseq/named_tree_node.py" line="252"/>
+        <source>Node &apos;{}&apos; is not allowed to have children.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/scriptaseq/named_tree_node.py" line="262"/>
+        <source>Cannot make a node a child of itself.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/scriptaseq/named_tree_node.py" line="264"/>
+        <source>Operation would create a cycle in the tree.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

@@ -1,6 +1,7 @@
 """Base functionality for creating trees of named nodes."""
 
 from sortedcontainers.sorteddict import SortedDict
+from PyQt5.Qt import QCoreApplication
 
 
 # Separator string used when encoding a node name path as a string.
@@ -73,16 +74,18 @@ class NamedTreeNode:
   def name(self, name):
     # Check if the name is empty.
     if name == '':
-      raise ValueError('Node name must not be empty.')
+      raise ValueError(QCoreApplication.translate('NamedTreeNode', 'Node name must not be empty.'))
     
     # Check if the name contains a disallowed substring.
     for substring in NAME_DISALLOWED_SUBSTRINGS:
       if substring in name:
-        raise ValueError("Node name must not contain '{}'.".format(substring))
+        raise ValueError(
+          QCoreApplication.translate('NamedTreeNode', "Node name must not contain '{}'.").format(substring))
     
     # Check if the name is available in the parent node.
     if self.parent is not None and name in self.parent.children and self.parent.children[name] is not self:
-      raise ValueError("Node '{}' already has a child named '{}'.".format(self.parent.name, name))
+      raise ValueError(
+        QCoreApplication.translate('NamedTreeNode', "Node '{}' already has a child named '{}'.").format(self.parent.name, name))
     
     # Set the name. The procedure for doing this depends on whether the node has a parent.
     if self.parent is None:
@@ -193,7 +196,7 @@ class NamedTreeNode:
     curr_node = self.tree_root if path.is_absolute else self
     for name in path.path_names:
       if name not in curr_node._children:
-        raise ValueError("Failed to resolve path '{}'.".format(path))
+        raise ValueError(QCoreApplication.translate('NamedTreeNode', "Failed to resolve path '{}'.").format(path))
       curr_node = curr_node._children[name]
     
     return curr_node
@@ -246,14 +249,16 @@ class NamedTreeNode:
     """
     # Check if this node can have children.
     if not self.can_have_children:
-      raise ValueError("Node '{}' is not allowed to have children.".format(self.name))
+      raise ValueError(
+        QCoreApplication.translate('NamedTreeNode', "Node '{}' is not allowed to have children.").format(self.name))
     
     # Check if this node already has another child with the same name as the prospective child.
     if node.name in self._children and self._children[node.name] is not node:
-      raise ValueError("Node '{}' already has a child named '{}'.".format(self.name, node.name))
+      raise ValueError(
+        QCoreApplication.translate('NamedTreeNode', "Node '{}' already has a child named '{}'.").format(self.name, node.name))
     
     # Check if adding the child would create an inheritance cycle.
     if self is node:
-      raise ValueError('Cannot make a node a child of itself.')
+      raise ValueError(QCoreApplication.translate('NamedTreeNode', 'Cannot make a node a child of itself.'))
     if node in self.ancestors:
-      raise ValueError('Operation would create a cycle in the tree.')
+      raise ValueError(QCoreApplication.translate('NamedTreeNode', 'Operation would create a cycle in the tree.'))
