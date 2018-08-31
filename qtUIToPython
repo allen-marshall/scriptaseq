@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-
-# Script to convert this project's Qt UI files into PyQt Python files using pyuic5.
-
-for filename in ./qt_ui/*.ui; do
-  pyuic5 $filename -o "./src/scriptaseq/internal/generated/qt_ui/$(basename $filename .ui).py"
-done

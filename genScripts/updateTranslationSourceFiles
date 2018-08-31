@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+# Script to update app translation files based on translatable strings found in the source code.
+
+# Construct a list of all supported translations.
+translations=( $(./listTranslations) )
+
+# Construct a list of all Python source files in the project.
+sources=$(find ../src -type f -name *.py)
+
+# Construct the pylupdate5 command.
+
+pylupdate5_cmd="pylupdate5 "
+
+# Add source files to the command.
+for source in "${sources[@]}"
+do
+  pylupdate5_cmd+="$source "
+done
+
+pylupdate5_cmd+="-ts "
+
+# Add translation files to the command.
+for translation in "${translations[@]}"
+do
+  pylupdate5_cmd+="../qt_ts/scriptaseq_$translation.ts "
+done
+
+# Run the pylupdate5 command.
+$pylupdate5_cmd

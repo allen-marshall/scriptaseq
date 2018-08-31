@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+# Script to update app translation files based on translatable strings found in the source code.
+
+# Construct a list of all supported translations.
+translations=( $(./listTranslations) )
+
+for translation in "${translations[@]}"
+do
+  lrelease "../qt_ts/scriptaseq_$translation.ts" -qm "../qt_qm/translations/scriptaseq_$translation.qm"
+done

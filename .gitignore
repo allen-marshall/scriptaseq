@@ -7,6 +7,9 @@
 /src/scriptaseq/internal/generated/qt_ui/**
 !/src/scriptaseq/internal/generated/qt_ui/__init__.py
 
+# Generated compact Qt translation files
+/qt_qm/translations/*.qm
+
 # Compiled Qt files
 *.qmlc
 
