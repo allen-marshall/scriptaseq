@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+# Script that calls the other generation scripts to update all auto-generated files in the project.
+
+./qtUIToPython
+./updateTranslationSourceFiles
+./updateTranslationReleaseFiles
