@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-
-# Script to generate a list of the supported translation locales.
-
-# Currently no translation locales are supported. To test translation functionality, we use a made-up locale called
-# testlanguage.
-echo "testlanguage"
