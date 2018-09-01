@@ -1,0 +1,41 @@
+/* Set default text color. */
+QWidget, QTabBar::tab {
+  color: rgb(80%, 80%, 80%);
+}
+
+QMainWindow {
+  background: rgb(11%, 13%, 18%);
+}
+
+QMainWindow::separator, QDockWidget::title {
+  background: rgb(2%, 2%, 2%);
+}
+
+QMainWindow::separator:hover, QMenuBar::item:pressed, QMenu::item:selected {
+  background: rgb(20%, 20%, 20%)
+}
+
+QMenuBar::item:disabled, QMenu::item:disabled {
+  color: rgb(40%, 40%, 40%);
+}
+
+QMenuBar, QMenu, QDockWidget * {
+  background: rgb(8%, 9%, 13%);
+}
+
+QTabBar {
+  background: rgb(11%, 13%, 18%);
+}
+
+QTabBar::tab {
+  margin: 0.1em;
+  padding: 0.2em;
+  border-width: 1px;
+  border-style: solid;
+  border-color: rgb(90%, 90%, 90%);
+  background: rgb(10%, 10%, 10%);
+}
+
+QTabBar::tab:selected {
+  background: rgb(25%, 25%, 25%);
+}
