@@ -10,6 +10,10 @@
 # Generated compact Qt translation files
 /qt_qm/translations/*.qm
 
+# Generated Qt resource files.
+resources.qrc
+resources.rcc
+
 # Compiled Qt files
 *.qmlc
 

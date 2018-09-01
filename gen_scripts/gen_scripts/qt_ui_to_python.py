@@ -36,7 +36,7 @@ def process_file(dir_path, base_file_name):
 
 if __name__ == '__main__':
   
-  for (dirpath, dirnames, filenames) in os.walk(QT_UI_PATH):
+  for dirpath, dirnames, filenames in os.walk(QT_UI_PATH):
     dir_rel_path = os.path.relpath(dirpath, QT_UI_PATH)
     for dir_name in dirnames:
       process_subdir(os.path.join(dir_rel_path, dir_name))

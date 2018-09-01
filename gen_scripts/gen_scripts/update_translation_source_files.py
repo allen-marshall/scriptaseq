@@ -16,7 +16,7 @@ if __name__ == '__main__':
   
   # Construct a list of all of the main app's Python source files.
   python_src_files = []
-  for (dirpath, dirnames, filenames) in os.walk(APP_MAIN_SRC_PATH):
+  for dirpath, dirnames, filenames in os.walk(APP_MAIN_SRC_PATH):
     for file_name in filenames:
       if file_name.endswith('.py'):
         python_src_files.append(os.path.join(dirpath, file_name))

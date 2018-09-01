@@ -1,6 +1,6 @@
 """ScriptASeq launcher script"""
 
-from PyQt5.Qt import QTranslator, QLocale, QLibraryInfo, QDir
+from PyQt5.Qt import QTranslator, QLocale, QLibraryInfo, QDir, QResource
 from PyQt5.QtWidgets import QApplication
 import sys
 
@@ -10,6 +10,9 @@ from scriptaseq.internal.gui.qt_ui_types.main_window import MainWindow
 
 if __name__ == '__main__':
   qt_app = QApplication(sys.argv)
+  
+  # Register resource packages.
+  QResource.registerResource('resources.rcc')
   
   # Set up translation.
   

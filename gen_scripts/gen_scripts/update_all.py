@@ -9,3 +9,4 @@ if __name__ == '__main__':
   runpy.run_module('gen_scripts.qt_ui_to_python', run_name='__main__')
   runpy.run_module('gen_scripts.update_translation_source_files', run_name='__main__')
   runpy.run_module('gen_scripts.update_translation_release_files', run_name='__main__')
+  runpy.run_module('gen_scripts.package_qt_resources', run_name='__main__')
