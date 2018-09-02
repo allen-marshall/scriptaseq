@@ -1,12 +1,12 @@
 """ScriptASeq launcher script"""
 
-from PyQt5.Qt import QTranslator, QLocale, QLibraryInfo, QDir, QResource, QFile
+from PyQt5.Qt import QTranslator, QLocale, QLibraryInfo, QDir, QResource
 from PyQt5.QtWidgets import QApplication
 import sys
 
 from scriptaseq.internal.gui.qml_types.registration import register_qml_types
 from scriptaseq.internal.gui.qt_ui_types.main_window import MainWindow
-from scriptaseq.internal.gui.qt_util import read_qt_resource
+from scriptaseq.internal.gui.qt_util import read_qt_resource, make_multires_icon
 
 
 # Text encoding to assume when loading the default style sheet.
@@ -43,6 +43,12 @@ def _init_style(qt_app):
   style_text = read_qt_resource(':/qss/default.qss', DEFAULT_STYLE_SHEET_ENCODING)
   qt_app.setStyleSheet(style_text)
 
+def _init_icon(qt_app):
+  """Sets up the application icon.
+  qt_app -- The QApplication that is being set up.
+  """
+  qt_app.setWindowIcon(make_multires_icon(':/icons/app'))
+
 if __name__ == '__main__':
   qt_app = QApplication(sys.argv)
   
@@ -54,6 +60,9 @@ if __name__ == '__main__':
   
   # Set up style information.
   _init_style(qt_app)
+  
+  # Set up the application icon.
+  _init_icon(qt_app)
   
   register_qml_types()
   
