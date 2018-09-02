@@ -1,5 +1,5 @@
 """Utilities related to PyQt functionality."""
-from PyQt5.Qt import QFile, QCoreApplication
+from PyQt5.Qt import QFile, QCoreApplication, QDir, QIcon, QPixmap
 
 
 def read_qt_resource(path, encoding=None):
@@ -27,3 +27,18 @@ def read_qt_resource(path, encoding=None):
   finally:
     if qfile.isOpen():
       qfile.close()
+
+def make_multires_icon(path):
+  """Makes a multi-resolution QIcon using images from the specified path.
+  This function assumes that all files in the specified directory contain images that should be loaded into the QIcon.
+  path -- Path to the directory containing the images from which the icon should be constructed. Should start with ":"
+    if referencing a resource inside a packaged Qt resource file.
+  """
+  icon = QIcon()
+  
+  # For each file found in the specified directory, add a pixmap of the file's contents to the icon.
+  for file_info in QDir(path).entryInfoList(sort=QDir.Name):
+    if file_info.isFile():
+      icon.addPixmap(QPixmap(file_info.absoluteFilePath()))
+  
+  return icon
