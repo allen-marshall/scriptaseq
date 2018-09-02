@@ -7,6 +7,7 @@ from scriptaseq.internal.generated.qt_ui.main_window import Ui_MainWindow
 from scriptaseq.internal.project_tree.project_tree_nodes import DirProjectTreeNode, SequenceProjectTreeNode
 from scriptaseq.internal.gui.qt_models.project_tree_qt_model import ProjectTreeQtModel
 from scriptaseq.internal.gui.qt_ui_types.project_tree_widget import ProjectTreeWidget
+from scriptaseq.internal.project_change_controllers.project_tree_controller import ProjectTreeController
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -34,8 +35,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     DirProjectTreeNode('childDir1', project_tree_root)
     SequenceProjectTreeNode('grandchildSequence', child_dir_0)
     
-    # Set up Qt model objects.
-    project_tree_qt_model = ProjectTreeQtModel(project_tree_root, self._undo_stack, self)
+    # Set up project change controllers and Qt model objects.
+    project_tree_controller = ProjectTreeController(self)
+    project_tree_qt_model = ProjectTreeQtModel(project_tree_root, self._undo_stack, project_tree_controller, self)
+    project_tree_controller.project_tree_qt_model = project_tree_qt_model
     
     # Set up GUI.
     project_tree_widget = ProjectTreeWidget(project_tree_qt_model, self)

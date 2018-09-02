@@ -57,10 +57,26 @@ class NamedTreeNode:
       value is None, meaning the node will have no parent and will be considered a root node.
     """
     self._parent = None
+    self._name = ''
     self._children = SortedDict()
     self.name = name
     self.parent = parent
     self.can_have_children = can_have_children
+  
+  @staticmethod
+  def verify_name_valid(name):
+    """Checks if a prospective node name is valid, and raises ValueError if not.
+    name -- Name to check.
+    """
+    # Check if the name is empty.
+    if name == '':
+      raise ValueError(QCoreApplication.translate('NamedTreeNode', 'Node name must not be empty.'))
+    
+    # Check if the name contains a disallowed substring.
+    for substring in NAME_DISALLOWED_SUBSTRINGS:
+      if substring in name:
+        raise ValueError(
+          QCoreApplication.translate('NamedTreeNode', "Node name must not contain '{}'.").format(substring))
   
   @property
   def name(self):
@@ -72,20 +88,16 @@ class NamedTreeNode:
   
   @name.setter
   def name(self, name):
-    # Check if the name is empty.
-    if name == '':
-      raise ValueError(QCoreApplication.translate('NamedTreeNode', 'Node name must not be empty.'))
+    # Do nothing if this node already has the specified name.
+    if name == self.name:
+      return
     
-    # Check if the name contains a disallowed substring.
-    for substring in NAME_DISALLOWED_SUBSTRINGS:
-      if substring in name:
-        raise ValueError(
-          QCoreApplication.translate('NamedTreeNode', "Node name must not contain '{}'.").format(substring))
+    # Check that the name is valid.
+    NamedTreeNode.verify_name_valid(name)
     
-    # Check if the name is available in the parent node.
-    if self.parent is not None and name in self.parent.children and self.parent.children[name] is not self:
-      raise ValueError(
-        QCoreApplication.translate('NamedTreeNode', "Node '{}' already has a child named '{}'.").format(self.parent.name, name))
+    # Check that the name is available.
+    if self.parent is not None:
+      self.parent.verify_child_name_available(name)
     
     # Set the name. The procedure for doing this depends on whether the node has a parent.
     if self.parent is None:
@@ -110,7 +122,7 @@ class NamedTreeNode:
   def parent(self, parent):
     # Make sure the new parent assignment is valid.
     if parent is not None:
-      parent._verify_can_add_as_child(self)
+      parent.verify_can_add_as_child(self)
     
     # Update the old and new parent nodes' child collections.
     if self._parent is not None:
@@ -232,6 +244,44 @@ class NamedTreeNode:
     children_copy[child_name] = None
     return children_copy.index(child_name)
   
+  def verify_child_name_available(self, name):
+    """Checks that the specified name is valid and available under this parent node, and raises ValueError if not.
+    All child names are considered unavailable if this node is not allowed to have children. Otherwise, a valid name is
+    considered available if and only if this node currently has no child with that name.
+    name -- Name to check.
+    """
+    # Check that the name is valid.
+    NamedTreeNode.verify_name_valid(name)
+    
+    # Check that this node can have children.
+    if not self.can_have_children:
+      raise ValueError(
+        QCoreApplication.translate('NamedTreeNode', "Node '{}' is not allowed to have children.").format(self.name))
+    
+    # Check that this node does not have a child with the specified name.
+    if name in self._children:
+      raise ValueError(
+        QCoreApplication.translate('NamedTreeNode', "Node '{}' already has a child named '{}'").format(self.name, name))
+  
+  def verify_can_add_as_child(self, node):
+    """Checks if the specified node can be added as a child of this node, and raises ValueError if not.
+    Does not raise an exception if the specified node is already a child of this node.
+    node -- The prospective new child node.
+    """
+    # Do nothing if the node is already a child of this node.
+    if node.name in self._children and self._children[node.name] is node:
+      return
+    
+    # Chick if the node's name is available as a child name for this node. This will also check if this node is allowed
+    # to have children.
+    self.verify_child_name_available(node.name)
+    
+    # Check if adding the child would create an inheritance cycle.
+    if self is node:
+      raise ValueError(QCoreApplication.translate('NamedTreeNode', 'Cannot make a node a child of itself.'))
+    if node in self.ancestors:
+      raise ValueError(QCoreApplication.translate('NamedTreeNode', 'Operation would create a cycle in the tree.'))
+  
   def _abs_name_path_list(self):
     """Gets the absolute path to this node, as a mutable list of node names."""
     # For a root node, use an empty path.
@@ -242,23 +292,3 @@ class NamedTreeNode:
     result = self.parent._abs_name_path_list()
     result += [self.name]
     return result
-  
-  def _verify_can_add_as_child(self, node):
-    """Checks if the specified node can be added as a child of this node, and raises ValueError if not.
-    node -- The prospective new child node.
-    """
-    # Check if this node can have children.
-    if not self.can_have_children:
-      raise ValueError(
-        QCoreApplication.translate('NamedTreeNode', "Node '{}' is not allowed to have children.").format(self.name))
-    
-    # Check if this node already has another child with the same name as the prospective child.
-    if node.name in self._children and self._children[node.name] is not node:
-      raise ValueError(
-        QCoreApplication.translate('NamedTreeNode', "Node '{}' already has a child named '{}'.").format(self.name, node.name))
-    
-    # Check if adding the child would create an inheritance cycle.
-    if self is node:
-      raise ValueError(QCoreApplication.translate('NamedTreeNode', 'Cannot make a node a child of itself.'))
-    if node in self.ancestors:
-      raise ValueError(QCoreApplication.translate('NamedTreeNode', 'Operation would create a cycle in the tree.'))

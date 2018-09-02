@@ -84,6 +84,30 @@ class NamedTreeNodeTest(TestCase):
     self._tree_4node_child1 = NamedTreeNode('child1ghi', can_have_children=False, parent=self._tree_4node_root)
     self._tree_4node_grandchild = NamedTreeNode('grandchildjkl', parent=self._tree_4node_child0)
   
+  def test_verify_name_valid(self):
+    NamedTreeNode.verify_name_valid('abc')
+    self.assertRaises(ValueError, NamedTreeNode.verify_name_valid, '')
+    self.assertRaises(ValueError, NamedTreeNode.verify_name_valid, 'abc/')
+  
+  def test_verify_child_name_available(self):
+    self._tree_1node.verify_child_name_available('abc')
+    self._tree_4node_root.verify_child_name_available('child2mno')
+    self.assertRaises(ValueError, self._tree_4node_child1.verify_child_name_available, 'abc')
+    self.assertRaises(ValueError, self._tree_4node_root.verify_child_name_available, 'child0def')
+    self.assertRaises(ValueError, self._tree_4node_root.verify_child_name_available, 'child1ghi')
+    self.assertRaises(ValueError, self._tree_4node_child0.verify_child_name_available, 'grandchildjkl')
+  
+  def test_verify_can_add_as_child(self):
+    self._tree_1node.verify_can_add_as_child(self._tree_4node_root)
+    self._tree_4node_root.verify_can_add_as_child(self._tree_4node_child0)
+    self._tree_4node_root.verify_can_add_as_child(self._tree_4node_grandchild)
+    self.assertRaises(ValueError, self._tree_4node_root.verify_can_add_as_child, self._tree_4node_root)
+    self.assertRaises(ValueError, self._tree_4node_child0.verify_can_add_as_child, self._tree_4node_root)
+    self.assertRaises(ValueError, self._tree_4node_grandchild.verify_can_add_as_child, self._tree_4node_root)
+    self.assertRaises(ValueError, self._tree_4node_child1.verify_can_add_as_child, self._tree_1node)
+    child0_duplicate_named_node = NamedTreeNode('child0def')
+    self.assertRaises(ValueError, self._tree_4node_root.verify_can_add_as_child, child0_duplicate_named_node)
+  
   def test_children_retrieval(self):
     self.assertSequenceEqual(self._tree_1node.children.items(), [])
     self.assertSequenceEqual(self._tree_4node_root.children.items(),
