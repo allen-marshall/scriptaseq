@@ -41,7 +41,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     project_tree_controller.project_tree_qt_model = project_tree_qt_model
     
     # Set up GUI.
-    project_tree_widget = ProjectTreeWidget(project_tree_qt_model, self)
+    project_tree_widget = ProjectTreeWidget(self._undo_stack, project_tree_qt_model, project_tree_controller, self)
     self.projectTreePlaceholder.addWidget(project_tree_widget)
     
   

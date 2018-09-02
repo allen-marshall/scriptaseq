@@ -1,8 +1,8 @@
 """Defines a controller class for making high-level changes to the project tree."""
-from PyQt5.Qt import QObject, pyqtSignal
+from PyQt5.Qt import QObject, pyqtSignal, QCoreApplication
 
-from scriptaseq.named_tree_node import NamedTreeNode
 from scriptaseq.internal.project_tree.project_tree_nodes import BaseProjectTreeNode
+from scriptaseq.named_tree_node import NamedTreeNode
 
 
 class ProjectTreeController(QObject):
@@ -12,18 +12,32 @@ class ProjectTreeController(QObject):
   should generally be called only from within subclasses of QUndoCommand.
   """
   
-  # Signal emitted when a node is renamed.
+  # Signal emitted when a node has been added.
+  # Arguments:
+  # - Reference to the node that was added.
+  node_added = pyqtSignal(BaseProjectTreeNode)
+  
+  # Signal emitted when a node has been deleted.
+  # Arguments:
+  # - Reference to the node that was deleted.
+  # - Reference to the former parent of the node that was deleted.
+  node_deleted = pyqtSignal(BaseProjectTreeNode, BaseProjectTreeNode)
+  
+  # Signal emitted when a node has been renamed.
   # Arguments:
   # - Reference to the node that was renamed.
   # - String containing the new name.
   # - String containing the old name.
   node_renamed = pyqtSignal(BaseProjectTreeNode, str, str)
   
-  def __init__(self, parent=None):
+  def __init__(self, root_node, parent=None):
     """Constructor.
     parent -- Parent QObject.
+    root_node -- Root node of the project tree.
     """
     super().__init__(parent)
+    
+    self._root_node = root_node
     
     self.project_tree_qt_model = None
   
@@ -40,10 +54,44 @@ class ProjectTreeController(QObject):
   def project_tree_qt_model(self, project_tree_qt_model):
     self._project_tree_qt_model = project_tree_qt_model
   
+  def add_node(self, node, parent):
+    """Adds a node to the project tree.
+    Raises ValueError if the operation cannot be performed.
+    node -- New project tree node to add.
+    parent -- Parent to which the new node will be added.
+    """
+    if node.parent is not None or node is self._root_node:
+      raise ValueError(
+        QCoreApplication.translate('ProjectTreeController', 'Cannot add a node that already exists in the project tree.'))
+    
+    # Notify the ProjectTreeQtModel before and after making the change.
+    with self.project_tree_qt_model.begin_add_node(node, parent):
+      node.parent = parent
+    
+    # Send out appropriate signals to notify other GUI components.
+    self.node_added.emit(node)
+  
+  def delete_node(self, node):
+    """Deletes a node from the project tree.
+    Raises ValueError if the operation cannot be performed.
+    node -- Project tree node to delete.
+    """
+    if node.parent is None:
+      raise ValueError(
+        QCoreApplication.translate('ProjectTreeController', 'Cannot delete root node from the project tree.'))
+    
+    parent_node = node.parent
+    
+    # Notify the ProjectTreeQtModel before and after making the change.
+    with self.project_tree_qt_model.begin_delete_node(node):
+      node.parent = None
+    
+    # Send out appropriate signals to notify other GUI components.
+    self.node_deleted.emit(node, parent_node)
+  
   def rename_node(self, node, new_name):
     """Performs a rename operation on a node in the project tree.
-    Raises ValueError if the node cannot be renamed due to invalidity of the new name or existence of a sibling with the
-    same name.
+    Raises ValueError if the operation cannot be performed.
     node -- Project tree node to rename.
     new_name -- New name for the project tree node.
     """
