@@ -39,3 +39,8 @@ QTabBar::tab {
 QTabBar::tab:selected {
   background: rgb(25%, 25%, 25%);
 }
+
+QTreeView {
+  selection-background-color: rgb(20%, 20%, 20%);
+  border-style: none;
+}

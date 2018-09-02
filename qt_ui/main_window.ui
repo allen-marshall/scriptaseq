@@ -52,7 +52,7 @@
    <addaction name="menuEdit"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <widget class="QDockWidget" name="dockNodeTree">
+  <widget class="QDockWidget" name="dockProjectTree">
    <property name="sizePolicy">
     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
      <horstretch>0</horstretch>
@@ -63,12 +63,12 @@
     <bool>false</bool>
    </property>
    <property name="windowTitle">
-    <string>Node Tree</string>
+    <string>Project Tree</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>1</number>
    </attribute>
-   <widget class="QWidget" name="dockNodeTreeLayout">
+   <widget class="QWidget" name="dockProjectTreeLayout">
     <property name="sizePolicy">
      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
       <horstretch>0</horstretch>
@@ -77,7 +77,7 @@
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout_3">
      <item>
-      <layout class="QHBoxLayout" name="nodeTreePlaceholder"/>
+      <layout class="QHBoxLayout" name="projectTreePlaceholder"/>
      </item>
     </layout>
    </widget>
