@@ -18,6 +18,9 @@ class ProjectTreeQtModel(QAbstractItemModel):
     
     self._root_node = root_node
     self._undo_stack = undo_stack
+    
+    # Create a cache for icons to avoid reloading icons unnecessarily. Keys are node classes, and values are QIcons.
+    self._icon_cache = {}
   
   def node_to_qt_index(self, node):
     """Creates a QModelIndex pointing to the specified node.
@@ -40,6 +43,14 @@ class ProjectTreeQtModel(QAbstractItemModel):
     
     else:
       return index.internalPointer()
+  
+  def _icon_for_node(self, node):
+    """Gets the QIcon that should be used to decorate the specified node.
+    node -- Node whose icon is to be obtained.
+    """
+    if node.__class__ not in self._icon_cache:
+      self._icon_cache[node.__class__] = node.__class__.make_icon()
+    return self._icon_cache[node.__class__]
   
   def index(self, row, column, parent=QModelIndex()):
     if not self.hasIndex(row, column, parent):
@@ -78,8 +89,12 @@ class ProjectTreeQtModel(QAbstractItemModel):
       node = self.qt_index_to_node(index)
     
       if index.column() == 0:
+        
         if role == QtCore.Qt.DisplayRole:
           return node.name
+        
+        if role == QtCore.Qt.DecorationRole:
+          return self._icon_for_node(node)
     
     # Return an invalid QVariant if the data could not be found.
     return QVariant()
