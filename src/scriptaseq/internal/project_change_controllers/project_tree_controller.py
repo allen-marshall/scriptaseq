@@ -30,6 +30,13 @@ class ProjectTreeController(QObject):
   # - String containing the old name.
   node_renamed = pyqtSignal(BaseProjectTreeNode, str, str)
   
+  # Signal emitted when a node has been reparented.
+  # Arguments:
+  # - Reference to the node that was reparented.
+  # - Reference to the new parent to which the node was added.
+  # - Reference to the old parent from which the node was removed.
+  node_reparented = pyqtSignal(BaseProjectTreeNode, BaseProjectTreeNode, BaseProjectTreeNode)
+  
   def __init__(self, root_node, parent=None):
     """Constructor.
     parent -- Parent QObject.
@@ -113,3 +120,29 @@ class ProjectTreeController(QObject):
     
     # Send out appropriate signals to notify other GUI components.
     self.node_renamed.emit(node, new_name, old_name)
+  
+  def reparent_node(self, node, new_parent):
+    """Performs a reparent operation on a node in the project tree.
+    Raises ValueError if the operation cannot be performed.
+    node -- Project tree node to reparent.
+    new_parent -- New parent for the project tree node.
+    """
+    # Do nothing if the node already has the specified parent.
+    if node.parent is new_parent:
+      return
+    
+    # Check that the operation is valid before notifying the ProjectTreeQtModel.
+    if node.parent is None:
+      raise ValueError(QCoreApplication.translate('ProjectTreeController', 'Cannot reparent root project tree node.'))
+    if new_parent is None:
+      raise ValueError(QCoreApplication.translate('ProjectTreeController', 'Cannot make a new root project tree node.'))
+    new_parent.verify_can_add_as_child(node)
+    
+    old_parent = node.parent
+    
+    # Notify the ProjectTreeQtModel before and after making the change.
+    with self.project_tree_qt_model.begin_reparent_node(node, new_parent):
+      node.parent = new_parent
+    
+    # Send out appropriate signals to notify other GUI components.
+    self.node_reparented.emit(node, new_parent, old_parent)

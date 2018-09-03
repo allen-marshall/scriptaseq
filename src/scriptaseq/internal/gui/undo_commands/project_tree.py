@@ -116,3 +116,42 @@ class RenameProjectTreeNodeCommand(BaseProjectTreeUndoCommand):
   
   def undo(self):
     self.project_tree_controller.rename_node(self._node, self._old_name)
+
+class ReparentProjectTreeNodeCommand(BaseProjectTreeUndoCommand):
+  """QUndoCommand class for reparenting a node in the project tree."""
+  
+  undo_id = gen_undo_id()
+  
+  def __init__(self, project_tree_controller, node, new_parent, parent=None):
+    """Constructor.
+    Raises ValueError if it is determined that the reparent operation would fail.
+    project_tree_controller -- Reference to the ProjectTreeController in charge of making high-level changes to the
+      project tree.
+    node -- ProjectTreeNode to reparent.
+    new_parent -- New parent node for the ProjectTreeNode.
+    parent -- Parent QUndoCommand.
+    """    
+    super().__init__(project_tree_controller, parent)
+    
+    # Check that the operation is valid.
+    if node.parent is None:
+      raise ValueError(
+        QCoreApplication.translate('ReparentProjectTreeNodeCommand', 'Cannot reparent root project tree node.'))
+    if new_parent is None:
+      raise ValueError(
+        QCoreApplication.translate('ReparentProjectTreeNodeCommand', 'Cannot make a new root project tree node.'))
+    new_parent.verify_can_add_as_child(node)
+    
+    self._node = node
+    self._old_parent = node.parent
+    self._new_parent = new_parent
+    
+    self.setText(
+      QCoreApplication.translate('ReparentProjectTreeNodeCommand', "Move '{}' to Parent '{}'").format(self._node.name, self._new_parent.name))
+    self.setObsolete(self._old_parent is self._new_parent)
+  
+  def redo(self):
+    self.project_tree_controller.reparent_node(self._node, self._new_parent)
+  
+  def undo(self):
+    self.project_tree_controller.reparent_node(self._node, self._old_parent)
