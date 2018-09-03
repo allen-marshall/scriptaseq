@@ -10,6 +10,12 @@ NAME_PATH_SEPARATOR = '/'
 # Sequence containing the substrings that are disallowed in node names.
 NAME_DISALLOWED_SUBSTRINGS = (NAME_PATH_SEPARATOR,)
 
+# Default name prefix to use when suggesting an available child name.
+DEFAULT_NAME_PREFIX = 'Node'
+
+# Format string used to convert a name suffix number to a suffix string when suggesting an available child name.
+_SUFFIX_FORMAT_STRING = '_{:08}'
+
 class TreeNamePath:
   """Represents a path identifying a NamedTreeNode in a tree."""
   
@@ -197,6 +203,30 @@ class NamedTreeNode:
     """
     if child_name in self._children:
       self._children[child_name].parent = None
+  
+  def suggest_child_name(self, prefix=DEFAULT_NAME_PREFIX):
+    """Suggests an available child name starting with the specified prefix.
+    Raises ValueError if this node is not allowed to have children, or if the prefix is not a valid node name.
+    prefix -- String that the child name must start with.
+    """
+    # Check that the prefix is a valid name.
+    NamedTreeNode.verify_name_valid(prefix)
+    
+    # Check that this node is allowed to have children.
+    if not self.can_have_children:
+      raise ValueError(
+        QCoreApplication.translate('NamedTreeNode', "Node '{}' is not allowed to have children.").format(self.name))
+    
+    # Use the prefix as the full name if it is available.
+    if prefix not in self._children:
+      return prefix
+    
+    # Otherwise, append a number to the prefix.
+    suffix_num = 0
+    while prefix + _SUFFIX_FORMAT_STRING.format(suffix_num) in self._children:
+      suffix_num += 1
+    
+    return prefix + _SUFFIX_FORMAT_STRING.format(suffix_num)
   
   def resolve_path(self, path):
     """Resolves a TreeNamePath and returns the NamedTreeNode it points to.

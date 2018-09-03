@@ -3,9 +3,14 @@
 from PyQt5.Qt import QIcon, QMenu, QCoreApplication
 
 from scriptaseq.internal.gui.qt_util import make_multires_icon
-from scriptaseq.internal.gui.undo_commands.project_tree import DeleteProjectTreeNodeCommand
+from scriptaseq.internal.gui.undo_commands.project_tree import DeleteProjectTreeNodeCommand, AddProjectTreeNodeCommand
 from scriptaseq.named_tree_node import NamedTreeNode
 
+# Name prefix to use for default directory node names.
+_DIR_NODE_NAME_PREFIX = 'dir'
+
+# Name prefix to use for default sequence node names.
+_SEQUENCE_NODE_NAME_PREFIX = 'seq'
 
 class BaseProjectTreeNode(NamedTreeNode):
   """Base class for nodes in the project tree."""
@@ -27,8 +32,17 @@ class BaseProjectTreeNode(NamedTreeNode):
     
     # Add menu items for creating child nodes, if the node is allowed to have children.
     if self.can_have_children:
-      # TODO
-      pass
+      def add_dir_func():
+        new_node = DirProjectTreeNode(self.suggest_child_name(_DIR_NODE_NAME_PREFIX))
+        undo_stack.push(AddProjectTreeNodeCommand(project_tree_controller, new_node, self))
+      def add_sequence_func():
+        new_node = SequenceProjectTreeNode(self.suggest_child_name(_SEQUENCE_NODE_NAME_PREFIX))
+        undo_stack.push(AddProjectTreeNodeCommand(project_tree_controller, new_node, self))
+      add_menu = menu.addMenu(QCoreApplication.translate('BaseProjectTreeNode', '&Add Child'))
+      add_dir_action = add_menu.addAction(QCoreApplication.translate('BaseProjectTreeNode', '&Directory'))
+      add_sequence_action = add_menu.addAction(QCoreApplication.translate('BaseProjectTreeNode', '&Sequence'))
+      add_dir_action.triggered.connect(add_dir_func)
+      add_sequence_action.triggered.connect(add_sequence_func)
     
     # Add a menu item for deleting the node, if it is not the root node.
     if self.parent is not None:

@@ -248,6 +248,17 @@ class NamedTreeNodeTest(TestCase):
     # Make sure removing a non-present child doesn't raise an exception.
     self._tree_1node.remove_child('nobody')
   
+  def test_suggest_child_name_success(self):
+    self.assertEqual(self._tree_4node_root.suggest_child_name('abc'), 'abc')
+    self.assertEqual(self._tree_4node_root.suggest_child_name('child0def'), 'child0def00000000')
+    NamedTreeNode('child0def00000000', parent=self._tree_4node_root)
+    self.assertEqual(self._tree_4node_root.suggest_child_name('child0def'), 'child0def00000001')
+  
+  def test_suggest_child_name_fail(self):
+    self.assertRaises(ValueError, self._tree_4node_root.suggest_child_name, '')
+    self.assertRaises(ValueError, self._tree_4node_root.suggest_child_name, 'abc/')
+    self.assertRaises(ValueError, self._tree_4node_child1.suggest_child_name, 'abc')
+  
   def test_resolve_path_absolute_success(self):
     path = self._tree_1node.abs_name_path
     self.assertIs(self._tree_1node.resolve_path(path), self._tree_1node)
