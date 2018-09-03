@@ -8,6 +8,11 @@ from scriptaseq.named_tree_node import TreeNamePath, NamedTreeNode
 class TreeNamePathTest(TestCase):
   """Unit tests for the TreeNamePath class."""
   
+  def test_constructor_fail(self):
+    # Test cases where the TreeNamePath constructor should fail.
+    self.assertRaises(ValueError, TreeNamePath, ['abc', '', 'def'])
+    self.assertRaises(ValueError, TreeNamePath, ['abc', 'de/f', 'ghi'])
+  
   def test_is_absolute(self):
     # Test the is_absolute property using empty paths.
     
@@ -47,6 +52,31 @@ class TreeNamePathTest(TestCase):
     path = TreeNamePath(path_list, False)
     self.assertSequenceEqual(path.path_names, path_list)
   
+  def test_from_str_success(self):
+    # Test the from_str method in cases where it should succeed.
+    
+    path = TreeNamePath.from_str('/')
+    self.assertSequenceEqual(path.path_names, [])
+    self.assertTrue(path.is_absolute)
+    
+    path = TreeNamePath.from_str('')
+    self.assertSequenceEqual(path.path_names, [])
+    self.assertFalse(path.is_absolute)
+    
+    path = TreeNamePath.from_str('/abc/def/ghi')
+    self.assertSequenceEqual(path.path_names, ['abc', 'def', 'ghi'])
+    self.assertTrue(path.is_absolute)
+    
+    path = TreeNamePath.from_str('abc/def/ghi')
+    self.assertSequenceEqual(path.path_names, ['abc', 'def', 'ghi'])
+    self.assertFalse(path.is_absolute)
+  
+  def test_from_str_fail(self):
+    # Test the from_str method in cases where it should fail.
+    self.assertRaises(ValueError, TreeNamePath.from_str, '//')
+    self.assertRaises(ValueError, TreeNamePath.from_str, 'abc//def')
+    self.assertRaises(ValueError, TreeNamePath.from_str, 'abc/def/')
+  
   def test_immutable(self):
     # Test immutability of sequence returned by path_names property.
     
@@ -72,6 +102,40 @@ class TreeNamePathTest(TestCase):
     
     path = TreeNamePath(path_list, False)
     self.assertEqual(str(path), '123/456/7890')
+  
+  def test_equality(self):
+    # Test equality checking for TreeNamePaths.
+    
+    path0 = TreeNamePath.from_str('/abc/def')
+    path1 = TreeNamePath.from_str('/abc/def')
+    self.assertEqual(path0, path1)
+    
+    path0 = TreeNamePath.from_str('abc/def')
+    path1 = TreeNamePath.from_str('/abc/def')
+    self.assertNotEqual(path0, path1)
+    
+    path0 = TreeNamePath.from_str('abc/def')
+    path1 = TreeNamePath.from_str('abc/ghi')
+    self.assertNotEqual(path0, path1)
+  
+  def test_hash(self):
+    # Test that equal TreeNamePaths have equal hash values.
+    
+    path0 = TreeNamePath.from_str('/abc/def')
+    path1 = TreeNamePath.from_str('/abc/def')
+    self.assertEqual(hash(path0), hash(path1))
+    
+    path0 = TreeNamePath.from_str('abc/def')
+    path1 = TreeNamePath.from_str('abc/def')
+    self.assertEqual(hash(path0), hash(path1))
+    
+    path0 = TreeNamePath.from_str('/')
+    path1 = TreeNamePath.from_str('/')
+    self.assertEqual(hash(path0), hash(path1))
+    
+    path0 = TreeNamePath.from_str('')
+    path1 = TreeNamePath.from_str('')
+    self.assertEqual(hash(path0), hash(path1))
 
 class NamedTreeNodeTest(TestCase):
   """Unit tests for the NamedTreeNode class."""
@@ -250,9 +314,9 @@ class NamedTreeNodeTest(TestCase):
   
   def test_suggest_child_name_success(self):
     self.assertEqual(self._tree_4node_root.suggest_child_name('abc'), 'abc')
-    self.assertEqual(self._tree_4node_root.suggest_child_name('child0def'), 'child0def00000000')
-    NamedTreeNode('child0def00000000', parent=self._tree_4node_root)
-    self.assertEqual(self._tree_4node_root.suggest_child_name('child0def'), 'child0def00000001')
+    self.assertEqual(self._tree_4node_root.suggest_child_name('child0def'), 'child0def_00000000')
+    NamedTreeNode('child0def_00000000', parent=self._tree_4node_root)
+    self.assertEqual(self._tree_4node_root.suggest_child_name('child0def'), 'child0def_00000001')
   
   def test_suggest_child_name_fail(self):
     self.assertRaises(ValueError, self._tree_4node_root.suggest_child_name, '')

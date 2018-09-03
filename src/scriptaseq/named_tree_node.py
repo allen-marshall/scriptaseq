@@ -24,8 +24,29 @@ class TreeNamePath:
     path_names -- Iterable containing the names along the path, starting with the highest in the tree.
     is_absolute -- Indicates whether the path is absolute (relative to the root node) or relative.
     """
+    # Raise ValueError if path_names contains an invalid path name.
+    for path_name in path_names:
+      NamedTreeNode.verify_name_valid(path_name)
+    
     self._path_names = tuple(path_names)
     self._is_absolute = is_absolute
+  
+  @staticmethod
+  def from_str(path_str):
+    """Converts a path string to a TreeNamePath object.
+    path_str -- Path string to convert. This may have been obtained by previously converting a TreeNamePath to a string.
+    """
+    # Detect and remove leading / for absolute paths.
+    is_absolute = path_str.startswith(NAME_PATH_SEPARATOR)
+    if is_absolute:
+      path_str = path_str[len(NAME_PATH_SEPARATOR):]
+    
+    # Separate the path names.
+    if path_str == '':
+      return TreeNamePath([], is_absolute)
+    else:
+      path_names = path_str.split(NAME_PATH_SEPARATOR)
+      return TreeNamePath(path_names, is_absolute)
   
   @property
   def is_absolute(self):
@@ -42,6 +63,15 @@ class TreeNamePath:
     if self.is_absolute:
       result = NAME_PATH_SEPARATOR + result
     return result
+  
+  def __eq__(self, other):
+    return \
+      isinstance(other, TreeNamePath) \
+      and bool(self.is_absolute) == bool(other.is_absolute) \
+      and self.path_names == other.path_names
+  
+  def __hash__(self):
+    return hash((self.is_absolute, self.path_names))
 
 class NamedTreeNode:
   """Base class representing a node in a tree of named nodes.
