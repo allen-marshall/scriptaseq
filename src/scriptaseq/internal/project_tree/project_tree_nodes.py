@@ -39,8 +39,11 @@ class BaseProjectTreeNode(NamedTreeNode):
         new_node = SequenceProjectTreeNode(self.suggest_child_name(_SEQUENCE_NODE_NAME_PREFIX))
         undo_stack.push(AddProjectTreeNodeCommand(project_tree_controller, new_node, self))
       add_menu = menu.addMenu(QCoreApplication.translate('BaseProjectTreeNode', '&Add Child'))
-      add_dir_action = add_menu.addAction(QCoreApplication.translate('BaseProjectTreeNode', '&Directory'))
-      add_sequence_action = add_menu.addAction(QCoreApplication.translate('BaseProjectTreeNode', '&Sequence'))
+      # TODO: Maybe avoid recreating the icons every time the context menu is created.
+      add_dir_action = add_menu.addAction(DirProjectTreeNode.make_icon(),
+        QCoreApplication.translate('BaseProjectTreeNode', '&Directory'))
+      add_sequence_action = add_menu.addAction(SequenceProjectTreeNode.make_icon(),
+        QCoreApplication.translate('BaseProjectTreeNode', '&Sequence'))
       add_dir_action.triggered.connect(add_dir_func)
       add_sequence_action.triggered.connect(add_sequence_func)
     
