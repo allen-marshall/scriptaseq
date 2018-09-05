@@ -3,7 +3,7 @@ QWidget, QTabBar::tab {
   color: rgb(80%, 80%, 80%);
 }
 
-QMainWindow {
+QMainWindow, QTabWidget::pane, QTabWidget::pane QWidget {
   background: rgb(11%, 13%, 18%);
 }
 
