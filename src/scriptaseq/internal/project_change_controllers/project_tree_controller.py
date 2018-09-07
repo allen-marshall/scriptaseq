@@ -15,7 +15,7 @@ class ProjectTreeController(QObject):
   # Signal emitted when the active node in the project tree has changed.
   # Arguments:
   # - Reference to the new active project tree node, or None if there is no active project tree node.
-  active_node_changed = pyqtSignal(BaseProjectTreeNode)
+  active_node_changed = pyqtSignal(object)
   
   # Signal emitted when a node has been added.
   # Arguments:
@@ -122,6 +122,10 @@ class ProjectTreeController(QObject):
     if node.parent is None:
       raise ValueError(
         QCoreApplication.translate('ProjectTreeController', 'Cannot delete root node from the project tree.'))
+    
+    # Reset the active node first, if it or one of its ancestors is being deleted.
+    if self.active_node is not None and (node is self.active_node or node in self.active_node.ancestors):
+      self.active_node = None
     
     parent_node = node.parent
     
