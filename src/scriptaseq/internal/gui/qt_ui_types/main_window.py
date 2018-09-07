@@ -12,6 +12,8 @@ from scriptaseq.internal.project_change_controllers.project_tree_controller impo
 from scriptaseq.internal.project_change_controllers.seq_component_tree_controller import SequenceComponentTreeController
 from scriptaseq.internal.project_tree.project_tree_nodes import DirProjectTreeNode, SequenceProjectTreeNode
 from scriptaseq.internal.seq_component_tree.component_tree_nodes import SequenceComponentNode
+from scriptaseq.internal.seq_component_tree.component_types import NoteSequenceComponentType, \
+  AutomationSequenceComponentType, WaveTableSequenceComponentType
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -38,8 +40,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     child_dir_0 = DirProjectTreeNode('childDir0', project_tree_root)
     DirProjectTreeNode('childDir1', project_tree_root)
     grandchild_seq = SequenceProjectTreeNode('grandchildSequence', child_dir_0)
-    SequenceComponentNode('childComponent0', grandchild_seq.root_seq_component_node)
-    SequenceComponentNode('childComponent1', grandchild_seq.root_seq_component_node)
+    SequenceComponentNode('childNote', component_type=NoteSequenceComponentType,
+      parent=grandchild_seq.root_seq_component_node)
+    SequenceComponentNode('childAutomation', component_type=AutomationSequenceComponentType,
+      parent=grandchild_seq.root_seq_component_node)
+    SequenceComponentNode('childWaveTable', component_type=WaveTableSequenceComponentType,
+      parent=grandchild_seq.root_seq_component_node)
     
     # Set up project change controllers and Qt model objects.
     project_tree_controller = ProjectTreeController(self)

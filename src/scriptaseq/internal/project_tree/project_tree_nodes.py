@@ -24,7 +24,7 @@ class BaseProjectTreeNode(NamedTreeNode):
   def get_icon(cls):
     """Gets a QIcon representing nodes of this class, creating it if it has not been previously created.
     This method should not be called before the Qt application's resource loading configuration has been set up.
-    Subclasses should generally override make_icon instead.
+    Subclasses should generally override make_icon instead of this method.
     """
     return cls.make_icon()
   

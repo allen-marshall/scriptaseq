@@ -4,15 +4,18 @@ from PyQt5.Qt import QMenu, QCoreApplication
 
 from scriptaseq.internal.gui.undo_commands.seq_component_tree import DeleteSequenceComponentTreeNodeCommand
 from scriptaseq.named_tree_node import NamedTreeNode
+from scriptaseq.internal.seq_component_tree.component_types import ContainerSequenceComponentType
 
 
 class SequenceComponentNode(NamedTreeNode):
   """Class for nodes in a sequence component tree."""
   
-  def __init__(self, name, parent=None, instanced_project_tree_node=None):
+  def __init__(self, name, component_type=ContainerSequenceComponentType, parent=None,
+    instanced_project_tree_node=None):
     """Constructor.
     Raises ValueError if the name is invalid or the node cannot be added to the specified parent.
     name -- Name for the new node.
+    component_type -- BaseSequenceComponentType subclass indicating the type of component.
     parent -- SequenceComponentNode reference indicating the parent to which the node will be attached as a child. The
       default value is None, meaning the node will initially have no parent.
     instanced_project_tree_node -- Reference to the project tree node that this node is instancing, or None if this node
@@ -20,6 +23,7 @@ class SequenceComponentNode(NamedTreeNode):
     """
     super().__init__(name, instanced_project_tree_node is None, parent)
     
+    self.component_type = component_type
     self._instanced_project_tree_node = instanced_project_tree_node
   
   @property

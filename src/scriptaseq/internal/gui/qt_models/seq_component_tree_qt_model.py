@@ -215,6 +215,9 @@ class SequenceComponentTreeQtModel(QAbstractItemModel):
         
         if role == QtCore.Qt.EditRole:
           return node.name
+        
+        if role == QtCore.Qt.DecorationRole:
+          return node.component_type.get_icon()
     
     # Return an invalid QVariant if the data could not be found.
     return QVariant()
