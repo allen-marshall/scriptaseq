@@ -9,11 +9,14 @@ class BaseSequenceComponentType:
   """Base class for sequence component node types."""
   
   # The user-visible name for this component type. Subclasses should override this.
-  display_name = QCoreApplication.translate('BaseComponentType', 'Base Component')
+  display_name = QCoreApplication.translate('BaseSequenceComponentType', 'Base Component')
   
   # The user-visible text to display on QMenu items representing this component type. Can contain an ampersand to
   # specify the keyboard shortcut for the menu item.
-  menu_text = QCoreApplication.translate('BaseComponentType', '&Base Component')
+  menu_text = QCoreApplication.translate('BaseSequenceComponentType', '&Base Component')
+  
+  # Default name to use when creating a sequence component node of this type. Subclasses should override this.
+  node_default_name = QCoreApplication.translate('BaseSequenceComponentType', 'BaseComponent', 'Sequence component node name')
   
   # A unique name for this component type, for use in save files, etc. Subclasses should override this.
   internal_name = 'BaseComponent'
@@ -42,6 +45,8 @@ class ContainerSequenceComponentType(BaseSequenceComponentType):
   
   menu_text = QCoreApplication.translate('ContainerSequenceComponentType', '&Container')
   
+  node_default_name = QCoreApplication.translate('ContainerSequenceComponentType', 'Container', 'Sequence component node name')
+  
   internal_name = 'Container'
   
   @classmethod
@@ -54,6 +59,8 @@ class NoteSequenceComponentType(BaseSequenceComponentType):
   display_name = QCoreApplication.translate('NoteSequenceComponentType', 'Note')
   
   menu_text = QCoreApplication.translate('NoteSequenceComponentType', '&Note')
+  
+  node_default_name = QCoreApplication.translate('NoteSequenceComponentType', 'Note', 'Sequence component node name')
   
   internal_name = 'Note'
   
@@ -68,6 +75,8 @@ class AutomationSequenceComponentType(BaseSequenceComponentType):
   
   menu_text = QCoreApplication.translate('AutomationSequenceComponentType', '&Automation')
   
+  node_default_name = QCoreApplication.translate('AutomationSequenceComponentType', 'Automation', 'Sequence component node name')
+  
   internal_name = 'Automation'
   
   @classmethod
@@ -80,6 +89,8 @@ class WaveTableSequenceComponentType(BaseSequenceComponentType):
   display_name = QCoreApplication.translate('WaveTableSequenceComponentType', 'Wave Table')
   
   menu_text = QCoreApplication.translate('WaveTableSequenceComponentType', '&Wave Table')
+  
+  node_default_name = QCoreApplication.translate('WaveTableSequenceComponentType', 'WaveTable', 'Sequence component node name')
   
   internal_name = 'WaveTable'
   

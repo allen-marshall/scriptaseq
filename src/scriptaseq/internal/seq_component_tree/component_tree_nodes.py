@@ -50,7 +50,7 @@ class SequenceComponentNode(NamedTreeNode):
       add_menu = menu.addMenu(QCoreApplication.translate('SequenceComponentNode', '&Create Child'))
       def add_func_maker(component_type):
         def add_func():
-          new_node = SequenceComponentNode(self.suggest_child_name(component_type.display_name), component_type)
+          new_node = SequenceComponentNode(self.suggest_child_name(component_type.node_default_name), component_type)
           undo_stack.push(AddSequenceComponentTreeNodeCommand(seq_component_tree_controller, project_tree_node,
             new_node, self))
         return add_func
