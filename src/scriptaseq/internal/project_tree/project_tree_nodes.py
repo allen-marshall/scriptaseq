@@ -19,9 +19,19 @@ _ROOT_SEQUENCE_COMPONENT_NODE_NAME = 'root'
 class BaseProjectTreeNode(NamedTreeNode):
   """Base class for nodes in the project tree."""
   
+  # TODO: Add a memoization decorator to this method.
+  @classmethod
+  def get_icon(cls):
+    """Gets a QIcon representing nodes of this class, creating it if it has not been previously created.
+    This method should not be called before the Qt application's resource loading configuration has been set up.
+    Subclasses should generally override make_icon instead.
+    """
+    return cls.make_icon()
+  
   @classmethod
   def make_icon(cls):
     """Makes a QIcon representing nodes of this class.
+    This method should not be called before the Qt application's resource loading configuration has been set up.
     Subclasses should override this. Default implementation returns an empty QIcon.
     """
     return QIcon()
@@ -43,10 +53,9 @@ class BaseProjectTreeNode(NamedTreeNode):
         new_node = SequenceProjectTreeNode(self.suggest_child_name(_SEQUENCE_NODE_NAME_PREFIX))
         undo_stack.push(AddProjectTreeNodeCommand(project_tree_controller, new_node, self))
       add_menu = menu.addMenu(QCoreApplication.translate('BaseProjectTreeNode', '&Create Child'))
-      # TODO: Maybe avoid recreating the icons every time the context menu is created.
-      add_dir_action = add_menu.addAction(DirProjectTreeNode.make_icon(),
+      add_dir_action = add_menu.addAction(DirProjectTreeNode.get_icon(),
         QCoreApplication.translate('BaseProjectTreeNode', '&Directory'))
-      add_sequence_action = add_menu.addAction(SequenceProjectTreeNode.make_icon(),
+      add_sequence_action = add_menu.addAction(SequenceProjectTreeNode.get_icon(),
         QCoreApplication.translate('BaseProjectTreeNode', '&Sequence'))
       add_dir_action.triggered.connect(add_dir_func)
       add_sequence_action.triggered.connect(add_sequence_func)
