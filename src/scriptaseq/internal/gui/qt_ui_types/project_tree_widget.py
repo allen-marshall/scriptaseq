@@ -1,7 +1,9 @@
 """Defines the widget class for displaying the project tree."""
-from PyQt5.Qt import QWidget, QPoint
+from PyQt5 import QtCore
+from PyQt5.Qt import QWidget
 
 from scriptaseq.internal.generated.qt_ui.project_tree_widget import Ui_ProjectTreeWidget
+from scriptaseq.internal.project_tree.project_tree_nodes import SequenceProjectTreeNode
 
 
 class ProjectTreeWidget(QWidget, Ui_ProjectTreeWidget):
@@ -24,7 +26,7 @@ class ProjectTreeWidget(QWidget, Ui_ProjectTreeWidget):
   
   def contextMenuEvent(self, event):
     # Get event position relative to the project tree view.
-    tree_view_pos = event.globalPos() - self.projectTreeView.viewport().mapToGlobal(QPoint())
+    tree_view_pos = self.projectTreeView.viewport().mapFromGlobal(event.globalPos())
     
     # If the event occurred inside the project tree view, show a context menu for the appropriate project tree node.
     if self.projectTreeView.viewport().rect().contains(tree_view_pos):

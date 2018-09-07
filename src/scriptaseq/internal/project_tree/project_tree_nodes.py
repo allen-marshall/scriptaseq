@@ -5,12 +5,16 @@ from PyQt5.Qt import QIcon, QMenu, QCoreApplication
 from scriptaseq.internal.gui.qt_util import make_multires_icon
 from scriptaseq.internal.gui.undo_commands.project_tree import DeleteProjectTreeNodeCommand, AddProjectTreeNodeCommand
 from scriptaseq.named_tree_node import NamedTreeNode
+from scriptaseq.internal.seq_component_tree.component_tree_nodes import SequenceComponentNode
 
 # Name prefix to use for default directory node names.
 _DIR_NODE_NAME_PREFIX = 'dir'
 
 # Name prefix to use for default sequence node names.
 _SEQUENCE_NODE_NAME_PREFIX = 'seq'
+
+# Name for the root node in a sequence component tree.
+_ROOT_SEQUENCE_COMPONENT_NODE_NAME = 'root'
 
 class BaseProjectTreeNode(NamedTreeNode):
   """Base class for nodes in the project tree."""
@@ -38,7 +42,7 @@ class BaseProjectTreeNode(NamedTreeNode):
       def add_sequence_func():
         new_node = SequenceProjectTreeNode(self.suggest_child_name(_SEQUENCE_NODE_NAME_PREFIX))
         undo_stack.push(AddProjectTreeNodeCommand(project_tree_controller, new_node, self))
-      add_menu = menu.addMenu(QCoreApplication.translate('BaseProjectTreeNode', '&Add Child'))
+      add_menu = menu.addMenu(QCoreApplication.translate('BaseProjectTreeNode', '&Create Child'))
       # TODO: Maybe avoid recreating the icons every time the context menu is created.
       add_dir_action = add_menu.addAction(DirProjectTreeNode.make_icon(),
         QCoreApplication.translate('BaseProjectTreeNode', '&Directory'))
@@ -83,7 +87,22 @@ class SequenceProjectTreeNode(BaseProjectTreeNode):
       default value is None, meaning the node will initially have no parent.
     """
     super().__init__(name, False, parent)
+    
+    self.root_seq_component_node = SequenceComponentNode(_ROOT_SEQUENCE_COMPONENT_NODE_NAME)
   
   @classmethod
   def make_icon(cls):
     return make_multires_icon(':/icons/project_tree/sequence')
+  
+  def make_context_menu(self, undo_stack, project_tree_controller, parent=None):
+    menu = super().make_context_menu(undo_stack, project_tree_controller, parent)
+    
+    # Add a menu item for making the sequence the active node.
+    def make_active_func():
+      project_tree_controller.active_node = self
+    make_active_action = menu.addAction(QCoreApplication.translate('SequenceProjectTreeNode', 'Make &Active'))
+    make_active_action.triggered.connect(make_active_func)
+    
+    return menu
+    
+    

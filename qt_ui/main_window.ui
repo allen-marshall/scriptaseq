@@ -39,16 +39,19 @@
        <attribute name="title">
         <string>Editor Settings</string>
        </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_3"/>
       </widget>
       <widget class="QWidget" name="tabTimeline">
        <attribute name="title">
         <string>Timeline</string>
        </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout"/>
       </widget>
       <widget class="QWidget" name="tabScript">
        <attribute name="title">
         <string>Script</string>
        </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_2"/>
       </widget>
      </widget>
     </item>
@@ -114,17 +117,17 @@
     </layout>
    </widget>
   </widget>
-  <widget class="QDockWidget" name="dockNodeProps">
+  <widget class="QDockWidget" name="dockSeqComponentTree">
    <property name="windowTitle">
-    <string>Node Properties</string>
+    <string>Sequence Component Tree</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>2</number>
    </attribute>
-   <widget class="QWidget" name="dockNodePropsLayout">
+   <widget class="QWidget" name="dockSeqComponentTreeLayout">
     <layout class="QHBoxLayout" name="horizontalLayout_4">
      <item>
-      <layout class="QHBoxLayout" name="nodePropsPlaceholder"/>
+      <layout class="QHBoxLayout" name="seqComponentTreePlaceholder"/>
      </item>
     </layout>
    </widget>
@@ -191,7 +194,7 @@
     <string>Save &amp;As...</string>
    </property>
   </action>
-  <zorder>dockNodeProps</zorder>
+  <zorder>dockSeqComponentTree</zorder>
  </widget>
  <resources/>
  <connections/>

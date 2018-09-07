@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>ProjectTreeWidget</class>
- <widget class="QWidget" name="ProjectTreeWidget">
+ <class>SequenceComponentTreeWidget</class>
+ <widget class="QWidget" name="SequenceComponentTreeWidget">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -10,18 +10,12 @@
     <height>300</height>
    </rect>
   </property>
-  <property name="focusPolicy">
-   <enum>Qt::StrongFocus</enum>
-  </property>
   <property name="windowTitle">
-   <string>Project Tree</string>
+   <string>Sequence Component Tree</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QTreeView" name="projectTreeView">
-     <property name="focusPolicy">
-      <enum>Qt::StrongFocus</enum>
-     </property>
+    <widget class="QTreeView" name="seqComponentTreeView">
      <property name="dragEnabled">
       <bool>true</bool>
      </property>

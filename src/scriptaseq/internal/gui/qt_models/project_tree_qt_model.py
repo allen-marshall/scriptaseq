@@ -2,9 +2,10 @@
 from PyQt5 import QtCore
 from PyQt5.Qt import QAbstractItemModel, QModelIndex, QVariant, QCoreApplication, QMimeData
 
-from scriptaseq.internal.gui.undo_commands.project_tree import RenameProjectTreeNodeCommand,\
+from scriptaseq.internal.gui.qt_models.qt_model_notifiers import AddNodeNotifier, DeleteNodeNotifier, MoveNodeNotifier
+from scriptaseq.internal.gui.undo_commands.project_tree import RenameProjectTreeNodeCommand, \
   ReparentProjectTreeNodeCommand
-from scriptaseq.internal.mime_data import PROJECT_TREE_NODE_PATH_MEDIA_TYPE, encode_project_tree_node_path,\
+from scriptaseq.internal.mime_data import PROJECT_TREE_NODE_PATH_MEDIA_TYPE, encode_project_tree_node_path, \
   decode_project_tree_node_path
 
 
@@ -12,118 +13,6 @@ class ProjectTreeQtModel(QAbstractItemModel):
   """Qt model class for visualizing the project tree.
   Despite the name, this class is designed to fit most closely into the View role of the MVC pattern.
   """
-  
-  class _AddNodeNotifier:
-    """Class that calls appropriate methods to notify this Qt model's views that a node is being added.
-    The notifier class is suitable for use in a with statement to perform operations before and after the change. The
-    notifier itself does not perform the change.
-    """
-    
-    def __init__(self, qt_model, parent, dst_row):
-      """Constructor.
-      qt_model -- ProjectTreeQtModel that owns this notifier.
-      parent -- QModelIndex of the parent node to which the new child will be added.
-      dst_row -- Numerical index that the node is expected to have within its parent's child ordering after the
-        addition.
-      """
-      self._qt_model = qt_model
-      self._parent = parent
-      self._dst_row = dst_row
-    
-    def __enter__(self):
-      self._qt_model.beginInsertRows(self._parent, self._dst_row, self._dst_row)
-      
-      return self
-    
-    def __exit__(self, exc_type, exc_value, exc_traceback):
-      self._qt_model.endInsertRows()
-      
-      return False
-  
-  class _DeleteNodeNotifier:
-    """Class that calls appropriate methods to notify this Qt model's views that a node is being deleted.
-    The notifier class is suitable for use in a with statement to perform operations before and after the change. The
-    notifier itself does not perform the change.
-    """
-    
-    def __init__(self, qt_model, index):
-      """Constructor.
-      qt_model -- ProjectTreeQtModel that owns this notifier.
-      index -- QModelIndex of the node to be deleted.
-      """
-      self._qt_model = qt_model
-      self._index = index
-      self._should_notify = index.isValid()
-    
-    def __enter__(self):
-      if not self._should_notify:
-        return self
-      
-      self._qt_model.beginRemoveRows(self._index.parent(), self._index.row(), self._index.row())
-      
-      return self
-    
-    def __exit__(self, exc_type, exc_value, exc_traceback):
-      if not self._should_notify:
-        return False
-      
-      self._qt_model.endRemoveRows()
-      
-      return False
-  
-  class _MoveNodeNotifier:
-    """Class that calls appropriate methods to notify this Qt model's views that a node is being moved.
-    The notifier class is suitable for use in a with statement to perform operations before and after the change. The
-    notifier itself does not perform the change.
-    """
-    
-    def __init__(self, qt_model, src_index, dst_parent, dst_row):
-      """Constructor.
-      qt_model -- ProjectTreeQtModel that owns this notifier.
-      src_index -- QModelIndex of the node to be moved.
-      dst_parent -- QModelIndex of the parent node to which the node will be moved.
-      dst_row -- Numerical index that the node is expected to have within its parent's child ordering after the move.
-      """
-      self._qt_model = qt_model
-      self._src_index = src_index
-      self._dst_parent = dst_parent
-      self._changing_parent = dst_parent != src_index.parent()
-      self._dst_row = dst_row
-      self._should_notify = True
-      
-      # If we are moving the root node, the notifier shouldn't do anything, as the ProjectTreeQtModel doesn't display
-      # the root node.
-      if not self._src_index.isValid():
-        self._should_notify = False
-      
-      # If the source and destination positions are the same, the notifier shouldn't do anything, to avoid getting an
-      # error condition from Qt.
-      if (not self._changing_parent) and self._dst_row == self._src_index.row():
-        self._should_notify = False
-    
-    def __enter__(self):
-      if not self._should_notify:
-        return self
-      
-      # Compute destination row. Note that Qt interprets the arguments to beginMoveRows differently when moving to a
-      # higher row index within the same parent, so we treat that as a special case.
-      dst_row = self._dst_row
-      if (not self._changing_parent) and dst_row >= self._src_index.row():
-        dst_row += 1
-      
-      # Call beginMoveRows, asserting that it doesn't fail.
-      assert self._qt_model.beginMoveRows(self._src_index.parent(), self._src_index.row(),
-        self._src_index.row(), self._dst_parent, dst_row)
-      
-      return self
-    
-    def __exit__(self, exc_type, exc_value, exc_traceback):
-      if not self._should_notify:
-        return False
-      
-      self._qt_model.endMoveRows()
-      
-      return False
   
   def __init__(self, root_node, undo_stack, project_tree_controller, parent=None):
     """Constructor.
@@ -177,8 +66,7 @@ class ProjectTreeQtModel(QAbstractItemModel):
       raise ValueError(
         QCoreApplication.translate('ProjectTreeQtModel', 'Cannot add a node that already exists in the project tree.'))
     
-    return ProjectTreeQtModel._AddNodeNotifier(self, self.node_to_qt_index(parent),
-      parent.child_idx_from_name(node.name))
+    return AddNodeNotifier(self, self.node_to_qt_index(parent), parent.child_idx_from_name(node.name))
   
   def begin_delete_node(self, node):
     """Notifies the ProjectTreeQtModel that a node deletion operation is about to take place.
@@ -192,7 +80,7 @@ class ProjectTreeQtModel(QAbstractItemModel):
       raise ValueError(
         QCoreApplication.translate('ProjectTreeQtModel', 'Cannot delete root node from the project tree.'))
     
-    return ProjectTreeQtModel._DeleteNodeNotifier(self, self.node_to_qt_index(node))
+    return DeleteNodeNotifier(self, self.node_to_qt_index(node))
   
   def begin_rename_node(self, node, new_name):
     """Notifies the ProjectTreeQtModel that a node rename operation is about to take place.
@@ -210,7 +98,7 @@ class ProjectTreeQtModel(QAbstractItemModel):
         child_idx_after_rename -= 1
     
     qt_index = self.node_to_qt_index(node)
-    return ProjectTreeQtModel._MoveNodeNotifier(self, qt_index, qt_index.parent(), child_idx_after_rename)
+    return MoveNodeNotifier(self, qt_index, qt_index.parent(), child_idx_after_rename)
   
   def begin_reparent_node(self, node, new_parent):
     """Notifies the ProjectTreeQtModel that a node reparent operation is about to take place.
@@ -229,7 +117,7 @@ class ProjectTreeQtModel(QAbstractItemModel):
     
     node_qt_index = self.node_to_qt_index(node)
     new_parent_qt_index = self.node_to_qt_index(new_parent)
-    return ProjectTreeQtModel._MoveNodeNotifier(self, node_qt_index, new_parent_qt_index, child_idx_after_reparent)
+    return MoveNodeNotifier(self, node_qt_index, new_parent_qt_index, child_idx_after_reparent)
   
   def _icon_for_node(self, node):
     """Gets the QIcon that should be used to decorate the specified node.
@@ -365,6 +253,7 @@ class ProjectTreeQtModel(QAbstractItemModel):
         node = self._root_node.resolve_path(decode_project_tree_node_path(data.data(PROJECT_TREE_NODE_PATH_MEDIA_TYPE)))
         new_parent_node = self.qt_index_to_node(parent)
         self._undo_stack.push(ReparentProjectTreeNodeCommand(self._project_tree_controller, node, new_parent_node))
+        return True
       except ValueError:
         return False
     

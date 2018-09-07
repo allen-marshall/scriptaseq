@@ -12,6 +12,11 @@ class ProjectTreeController(QObject):
   should generally be called only from within subclasses of QUndoCommand.
   """
   
+  # Signal emitted when the active node in the project tree has changed.
+  # Arguments:
+  # - Reference to the new active project tree node, or None if there is no active project tree node.
+  active_node_changed = pyqtSignal(BaseProjectTreeNode)
+  
   # Signal emitted when a node has been added.
   # Arguments:
   # - Reference to the node that was added.
@@ -39,14 +44,16 @@ class ProjectTreeController(QObject):
   
   def __init__(self, root_node, parent=None):
     """Constructor.
-    parent -- Parent QObject.
     root_node -- Root node of the project tree.
+    parent -- Parent QObject.
     """
     super().__init__(parent)
     
     self._root_node = root_node
+    self._active_node = None
     
-    self.project_tree_qt_model = None
+    self._project_tree_qt_model = None
+    self._seq_component_tree_qt_model = None
   
   @property
   def project_tree_qt_model(self):
@@ -60,6 +67,35 @@ class ProjectTreeController(QObject):
   @project_tree_qt_model.setter
   def project_tree_qt_model(self, project_tree_qt_model):
     self._project_tree_qt_model = project_tree_qt_model
+  
+  @property
+  def seq_component_tree_qt_model(self):
+    """Property containing a reference to the application's SequenceComponentTreeQtModel.
+    This reference is needed because the SequenceComponentTreeQtModel has to be notified before certain changes take
+    place, and thus Qt signals are not sufficient to keep the SequenceComponentTreeQtModel up to date. It is recommended
+    that this property be set immediately once the application's SequenceComponentTreeQtModel has been constructed.
+    """
+    return self._seq_component_tree_qt_model
+  
+  @seq_component_tree_qt_model.setter
+  def seq_component_tree_qt_model(self, seq_component_tree_qt_model):
+    self._seq_component_tree_qt_model = seq_component_tree_qt_model
+  
+  @property
+  def active_node(self):
+    """Property containing a reference to the active project tree node.
+    A value of None means there is no active project tree node.
+    """
+    return self._active_node
+  
+  @active_node.setter
+  def active_node(self, active_node):
+    # Notify the SequenceComponentTreeQtModel before and after the change.
+    with self.seq_component_tree_qt_model.begin_change_active_project_tree_node():
+      self._active_node = active_node
+    
+    # Send out appropriate signals to notify other GUI components.
+    self.active_node_changed.emit(active_node)
   
   def add_node(self, node, parent):
     """Adds a node to the project tree.
