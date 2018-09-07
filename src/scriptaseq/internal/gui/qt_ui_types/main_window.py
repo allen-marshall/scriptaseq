@@ -9,6 +9,7 @@ from scriptaseq.internal.gui.qt_models.seq_component_tree_qt_model import Sequen
 from scriptaseq.internal.gui.qt_ui_types.project_tree_widget import ProjectTreeWidget
 from scriptaseq.internal.gui.qt_ui_types.seq_component_tree_widget import SequenceComponentTreeWidget
 from scriptaseq.internal.project_change_controllers.project_tree_controller import ProjectTreeController
+from scriptaseq.internal.project_change_controllers.seq_component_node_controller import SequenceComponentNodeController
 from scriptaseq.internal.project_change_controllers.seq_component_tree_controller import SequenceComponentTreeController
 from scriptaseq.internal.project_tree.project_tree_nodes import DirProjectTreeNode, SequenceProjectTreeNode
 from scriptaseq.internal.seq_component_tree.component_tree_nodes import SequenceComponentNode
@@ -50,6 +51,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     # Set up project change controllers and Qt model objects.
     project_tree_controller = ProjectTreeController(self)
     seq_component_tree_controller = SequenceComponentTreeController(self)
+    seq_component_node_controller = SequenceComponentNodeController(self)
     project_tree_qt_model = ProjectTreeQtModel(project_tree_root, self._undo_stack, project_tree_controller, self)
     seq_component_tree_qt_model = SequenceComponentTreeQtModel(self._undo_stack, project_tree_controller,
       seq_component_tree_controller, self)
@@ -61,7 +63,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     project_tree_widget = ProjectTreeWidget(self._undo_stack, project_tree_qt_model, project_tree_controller, self)
     self.projectTreePlaceholder.addWidget(project_tree_widget)
     seq_component_tree_widget = SequenceComponentTreeWidget(self._undo_stack, seq_component_tree_qt_model,
-      project_tree_controller, seq_component_tree_controller, self)
+      project_tree_controller, seq_component_tree_controller, seq_component_node_controller, self)
     self.seqComponentTreePlaceholder.addWidget(seq_component_tree_widget)
   
   def _set_can_redo(self, can_redo):
