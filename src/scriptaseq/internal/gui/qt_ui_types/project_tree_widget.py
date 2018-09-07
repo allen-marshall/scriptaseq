@@ -1,9 +1,7 @@
 """Defines the widget class for displaying the project tree."""
-from PyQt5 import QtCore
 from PyQt5.Qt import QWidget
 
 from scriptaseq.internal.generated.qt_ui.project_tree_widget import Ui_ProjectTreeWidget
-from scriptaseq.internal.project_tree.project_tree_nodes import SequenceProjectTreeNode
 
 
 class ProjectTreeWidget(QWidget, Ui_ProjectTreeWidget):

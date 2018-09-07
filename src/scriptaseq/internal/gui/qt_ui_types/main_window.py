@@ -54,7 +54,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     # Set up GUI.
     project_tree_widget = ProjectTreeWidget(self._undo_stack, project_tree_qt_model, project_tree_controller, self)
     self.projectTreePlaceholder.addWidget(project_tree_widget)
-    seq_component_tree_widget = SequenceComponentTreeWidget(seq_component_tree_qt_model, self)
+    seq_component_tree_widget = SequenceComponentTreeWidget(self._undo_stack, seq_component_tree_qt_model,
+      project_tree_controller, seq_component_tree_controller, self)
     self.seqComponentTreePlaceholder.addWidget(seq_component_tree_widget)
   
   def _set_can_redo(self, can_redo):
