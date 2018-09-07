@@ -86,3 +86,7 @@ class WaveTableSequenceComponentType(BaseSequenceComponentType):
   @classmethod
   def make_icon(cls):
     return make_multires_icon(':/icons/sequence_component_tree/wave_table')
+
+# Sequence that lists the supported sequence component types that should be available through the GUI.
+SUPPORTED_COMPONENT_TYPES = (ContainerSequenceComponentType, NoteSequenceComponentType, AutomationSequenceComponentType,
+  WaveTableSequenceComponentType)

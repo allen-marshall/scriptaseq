@@ -2,10 +2,11 @@
 
 from PyQt5.Qt import QMenu, QCoreApplication
 
-from scriptaseq.internal.gui.undo_commands.seq_component_tree import DeleteSequenceComponentTreeNodeCommand
+from scriptaseq.internal.gui.undo_commands.seq_component_tree import DeleteSequenceComponentTreeNodeCommand,\
+  AddSequenceComponentTreeNodeCommand
 from scriptaseq.named_tree_node import NamedTreeNode
-from scriptaseq.internal.seq_component_tree.component_types import ContainerSequenceComponentType
-
+from scriptaseq.internal.seq_component_tree.component_types import ContainerSequenceComponentType,\
+  SUPPORTED_COMPONENT_TYPES
 
 class SequenceComponentNode(NamedTreeNode):
   """Class for nodes in a sequence component tree."""
@@ -24,19 +25,15 @@ class SequenceComponentNode(NamedTreeNode):
     super().__init__(name, instanced_project_tree_node is None, parent)
     
     self.component_type = component_type
-    self._instanced_project_tree_node = instanced_project_tree_node
+    self.instanced_project_tree_node = instanced_project_tree_node
   
-  @property
-  def instanced_project_tree_node(self):
-    """Property containing a reference to the project tree node that this node is instancing.
-    A value of None means this node is not instancing a project tree node.
-    """
-    return self._instanced_project_tree_node
+  def is_in_instance(self):
+    """Checks whether this node is part of an instancing subtree."""
+    return self.instanced_project_tree_node is not None
   
-  @instanced_project_tree_node.setter
-  def instanced_project_tree_node(self, instanced_project_tree_node):
-    self._instanced_project_tree_node = instanced_project_tree_node
-    self.can_have_children = instanced_project_tree_node is None
+  def is_instance_root(self):
+    """Checks whether this node is the root of an instancing subtree."""
+    return self.is_in_instance() and (self.parent is None or self.parent.is_in_instance())
   
   def make_context_menu(self, undo_stack, seq_component_tree_controller, project_tree_node, parent=None):
     """Creates a context menu for this node.
@@ -48,13 +45,21 @@ class SequenceComponentNode(NamedTreeNode):
     """
     menu = QMenu(parent)
     
-    # Add menu items for creating child nodes, if the node is allowed to have children.
-    if self.can_have_children:
-      # TODO
-      pass
+    # Add menu items for creating child nodes, if creating children is allowed.
+    if self.can_have_children and not self.is_in_instance():
+      add_menu = menu.addMenu(QCoreApplication.translate('SequenceComponentNode', '&Create Child'))
+      def add_func_maker(component_type):
+        def add_func():
+          new_node = SequenceComponentNode(self.suggest_child_name(component_type.display_name), component_type)
+          undo_stack.push(AddSequenceComponentTreeNodeCommand(seq_component_tree_controller, project_tree_node,
+            new_node, self))
+        return add_func
+      for component_type in SUPPORTED_COMPONENT_TYPES:
+        add_action = add_menu.addAction(component_type.get_icon(), component_type.menu_text)
+        add_action.triggered.connect(add_func_maker(component_type))
     
-    # Add a menu item for deleting the node, if it is not the root node.
-    if self.parent is not None:
+    # Add a menu item for deleting the node, if it can be deleted.
+    if self.parent is not None and ((not self.is_in_instance()) or self.is_instance_root()):
       def delete_func():
         undo_stack.push(DeleteSequenceComponentTreeNodeCommand(seq_component_tree_controller, project_tree_node, self))
       delete_action = menu.addAction(QCoreApplication.translate('SequenceComponentNode', '&Delete'))
