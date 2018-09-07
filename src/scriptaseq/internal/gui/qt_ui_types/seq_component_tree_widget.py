@@ -37,8 +37,7 @@ class SequenceComponentTreeWidget(QWidget, Ui_SequenceComponentTreeWidget):
       node = self.seqComponentTreeView.model().qt_index_to_node(qt_index)
       
       if node is not None:
-        menu = node.make_context_menu(self._undo_stack, self._seq_component_tree_controller,
-          self._project_tree_controller.active_node, self)
+        menu = node.make_context_menu(self._undo_stack, self._seq_component_tree_controller, self)
         if menu is not None and not menu.isEmpty():
           event.setAccepted(True)
           menu.exec_(event.globalPos())

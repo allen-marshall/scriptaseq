@@ -97,7 +97,8 @@ class SequenceProjectTreeNode(BaseProjectTreeNode):
     """
     super().__init__(name, False, parent)
     
-    self.root_seq_component_node = SequenceComponentNode(_ROOT_SEQUENCE_COMPONENT_NODE_NAME)
+    self.root_seq_component_node = SequenceComponentNode(_ROOT_SEQUENCE_COMPONENT_NODE_NAME,
+      owning_project_tree_node=self)
   
   @classmethod
   def make_icon(cls):

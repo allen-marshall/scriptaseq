@@ -106,6 +106,7 @@ class ProjectTreeController(QObject):
     if node.parent is not None or node is self._root_node:
       raise ValueError(
         QCoreApplication.translate('ProjectTreeController', 'Cannot add a node that already exists in the project tree.'))
+    parent.verify_can_add_as_child(node)
     
     # Notify the ProjectTreeQtModel before and after making the change.
     with self.project_tree_qt_model.begin_add_node(node, parent):

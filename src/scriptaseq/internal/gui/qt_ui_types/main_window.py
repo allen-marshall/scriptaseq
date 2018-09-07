@@ -40,12 +40,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     child_dir_0 = DirProjectTreeNode('childDir0', project_tree_root)
     DirProjectTreeNode('childDir1', project_tree_root)
     grandchild_seq = SequenceProjectTreeNode('grandchildSequence', child_dir_0)
-    SequenceComponentNode('childNote', component_type=NoteSequenceComponentType,
-      parent=grandchild_seq.root_seq_component_node)
-    SequenceComponentNode('childAutomation', component_type=AutomationSequenceComponentType,
-      parent=grandchild_seq.root_seq_component_node)
-    SequenceComponentNode('childWaveTable', component_type=WaveTableSequenceComponentType,
-      parent=grandchild_seq.root_seq_component_node)
+    SequenceComponentNode('childNote', grandchild_seq, component_type=NoteSequenceComponentType).parent = \
+      grandchild_seq.root_seq_component_node
+    SequenceComponentNode('childAutomation', grandchild_seq, component_type=AutomationSequenceComponentType).parent = \
+      grandchild_seq.root_seq_component_node
+    SequenceComponentNode('childWaveTable', grandchild_seq, component_type=WaveTableSequenceComponentType).parent = \
+      grandchild_seq.root_seq_component_node
     
     # Set up project change controllers and Qt model objects.
     project_tree_controller = ProjectTreeController(self)

@@ -2,7 +2,6 @@
 
 from PyQt5.Qt import QObject, pyqtSignal, QCoreApplication
 
-from scriptaseq.internal.project_tree.project_tree_nodes import BaseProjectTreeNode
 from scriptaseq.internal.seq_component_tree.component_tree_nodes import SequenceComponentNode
 from scriptaseq.named_tree_node import NamedTreeNode
 
@@ -17,33 +16,28 @@ class SequenceComponentTreeController(QObject):
   
   # Signal emitted when a sequence component node has been added.
   # Arguments:
-  # - Reference to the BaseProjectTreeNode in whose component tree the change occurred.
   # - Reference to the SequenceComponentNode that was added.
-  node_added = pyqtSignal(BaseProjectTreeNode, SequenceComponentNode)
+  node_added = pyqtSignal(SequenceComponentNode)
   
   # Signal emitted when a sequence component node has been deleted.
   # Arguments:
-  # - Reference to the BaseProjectTreeNode in whose component tree the change occurred.
   # - Reference to the SequenceComponentNode that was deleted.
   # - Reference to the former parent of the node that was deleted.
-  node_deleted = pyqtSignal(BaseProjectTreeNode, SequenceComponentNode, SequenceComponentNode)
+  node_deleted = pyqtSignal(SequenceComponentNode, SequenceComponentNode)
   
   # Signal emitted when a sequence component node has been renamed.
   # Arguments:
-  # - Reference to the BaseProjectTreeNode in whose component tree the change occurred.
   # - Reference to the SequenceComponentNode that was renamed.
   # - String containing the new name.
   # - String containing the old name.
-  node_renamed = pyqtSignal(BaseProjectTreeNode, SequenceComponentNode, str, str)
+  node_renamed = pyqtSignal(SequenceComponentNode, str, str)
   
   # Signal emitted when a sequence component node has been reparented.
   # Arguments:
-  # - Reference to the BaseProjectTreeNode in whose component tree the change occurred.
   # - Reference to the SequenceComponentNode that was reparented.
   # - Reference to the new parent to which the node was added.
   # - Reference to the old parent from which the node was removed.
-  node_reparented = pyqtSignal(BaseProjectTreeNode, SequenceComponentNode, SequenceComponentNode,
-    SequenceComponentNode)
+  node_reparented = pyqtSignal(SequenceComponentNode, SequenceComponentNode, SequenceComponentNode)
   
   def __init__(self, parent=None):
     """Constructor.
@@ -66,28 +60,29 @@ class SequenceComponentTreeController(QObject):
   def seq_component_tree_qt_model(self, seq_component_tree_qt_model):
     self._seq_component_tree_qt_model = seq_component_tree_qt_model
   
-  def add_node(self, project_tree_node, node, parent):
+  def add_node(self, node, parent):
     """Adds a node to a sequence component tree.
     Raises ValueError if the operation cannot be performed.
-    project_tree_node -- Project tree node that owns the sequence component tree where the change will occur.
     node -- New sequence component tree node to add.
     parent -- Parent to which the new node will be added.
     """
-    if node.parent is not None or node is project_tree_node.root_seq_component_node:
+    if node.parent is not None or node is node.owning_project_tree_node.root_seq_component_node:
       raise ValueError(
         QCoreApplication.translate('SequenceComponentTreeController', 'Cannot add a node that already exists in the sequence component tree.'))
+    if node.owning_project_tree_node is not parent.owning_project_tree_node:
+      raise ValueError(
+        QCoreApplication.translate('SequenceComponentTreeController', "Cannot mix sequence component nodes from different project tree nodes."))
     
     # Notify the SeqComponentTreeQtModel before and after making the change.
-    with self.seq_component_tree_qt_model.begin_add_node(project_tree_node, node, parent):
+    with self.seq_component_tree_qt_model.begin_add_node(node, parent):
       node.parent = parent
     
     # Send out appropriate signals to notify other GUI components.
-    self.node_added.emit(project_tree_node, node)
+    self.node_added.emit(node)
   
-  def delete_node(self, project_tree_node, node):
+  def delete_node(self, node):
     """Deletes a node from a sequence component tree.
     Raises ValueError if the operation cannot be performed.
-    project_tree_node -- Project tree node that owns the sequence component tree where the change will occur.
     node -- Sequence component tree node to delete.
     """
     if node.parent is None:
@@ -97,16 +92,15 @@ class SequenceComponentTreeController(QObject):
     parent_node = node.parent
     
     # Notify the SeqComponentTreeQtModel before and after making the change.
-    with self.seq_component_tree_qt_model.begin_delete_node(project_tree_node, node):
+    with self.seq_component_tree_qt_model.begin_delete_node(node):
       node.parent = None
     
     # Send out appropriate signals to notify other GUI components.
-    self.node_deleted.emit(project_tree_node, node, parent_node)
+    self.node_deleted.emit(node, parent_node)
   
-  def rename_node(self, project_tree_node, node, new_name):
+  def rename_node(self, node, new_name):
     """Performs a rename operation on a node in a sequence component tree.
     Raises ValueError if the operation cannot be performed.
-    project_tree_node -- Project tree node that owns the sequence component tree where the change will occur.
     node -- Sequence component tree node to rename.
     new_name -- New name for the node.
     """
@@ -123,16 +117,15 @@ class SequenceComponentTreeController(QObject):
     old_name = node.name
     
     # Notify the SeqComponentTreeQtModel before and after making the change.
-    with self.seq_component_tree_qt_model.begin_rename_node(project_tree_node, node, new_name):
+    with self.seq_component_tree_qt_model.begin_rename_node(node, new_name):
       node.name = new_name
     
     # Send out appropriate signals to notify other GUI components.
-    self.node_renamed.emit(project_tree_node, node, new_name, old_name)
+    self.node_renamed.emit(node, new_name, old_name)
   
-  def reparent_node(self, project_tree_node, node, new_parent):
+  def reparent_node(self, node, new_parent):
     """Performs a reparent operation on a node in a sequence component tree.
     Raises ValueError if the operation cannot be performed.
-    project_tree_node -- Project tree node that owns the sequence component tree where the change will occur.
     node -- Sequence component tree node to reparent.
     new_parent -- New parent for the node.
     """
@@ -140,18 +133,20 @@ class SequenceComponentTreeController(QObject):
     if node.parent is new_parent:
       return
     
-    # Check that the operation is valid before notifying the ProjectTreeQtModel.
+    # Check that the operation is valid before notifying the SeqComponentTreeQtModel.
     if node.parent is None:
-      raise ValueError(QCoreApplication.translate('SequenceComponentTreeController', 'Cannot reparent root sequence component tree node.'))
+      raise ValueError(
+        QCoreApplication.translate('SequenceComponentTreeController', 'Cannot reparent root sequence component tree node.'))
     if new_parent is None:
-      raise ValueError(QCoreApplication.translate('SequenceComponentTreeController', 'Cannot make a new root sequence component tree node.'))
+      raise ValueError(
+        QCoreApplication.translate('SequenceComponentTreeController', 'Cannot make a new root sequence component tree node.'))
     new_parent.verify_can_add_as_child(node)
     
     old_parent = node.parent
     
     # Notify the SeqComponentTreeQtModel before and after making the change.
-    with self.seq_component_tree_qt_model.begin_reparent_node(project_tree_node, node, new_parent):
+    with self.seq_component_tree_qt_model.begin_reparent_node(node, new_parent):
       node.parent = new_parent
     
     # Send out appropriate signals to notify other GUI components.
-    self.node_reparented.emit(project_tree_node, node, new_parent, old_parent)
+    self.node_reparented.emit(node, new_parent, old_parent)
