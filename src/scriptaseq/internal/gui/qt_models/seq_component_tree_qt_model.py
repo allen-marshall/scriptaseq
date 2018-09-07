@@ -19,13 +19,16 @@ class SequenceComponentTreeQtModel(QAbstractItemModel):
   Despite the name, this class is designed to fit most closely into the View role of the MVC pattern.
   """
   
-  def __init__(self, undo_stack, project_tree_controller, seq_component_tree_controller, parent=None):
+  def __init__(self, undo_stack, project_tree_controller, seq_component_tree_controller, seq_component_node_controller,
+    parent=None):
     """Constructor.
     undo_stack -- QUndoStack to receive commands generated through user interaction with this Qt model.
     project_tree_controller -- Reference to the ProjectTreeController in charge of high-level changes to the project
       tree.
     seq_component_tree_controller -- Reference to the SequenceComponentTreeController in charge of high-level changes to
-      the active sequence component tree.
+      sequence component trees.
+    seq_component_node_controller -- Reference to the SequenceComponentNodeController in charge of making changes to
+      individual nodes in sequence component trees.
     parent -- Parent QObject.
     """
     super().__init__(parent)
@@ -33,6 +36,10 @@ class SequenceComponentTreeQtModel(QAbstractItemModel):
     self._undo_stack = undo_stack
     self._project_tree_controller = project_tree_controller
     self._seq_component_tree_controller = seq_component_tree_controller
+    # No need to store a reference to seq_component_node_controller; we just need to connect to its signals.
+    
+    self._seq_component_tree_controller.node_renamed.connect(self._node_name_changed)
+    seq_component_node_controller.node_component_type_changed.connect(self._node_component_type_changed)
   
   def node_to_qt_index(self, seq_component_tree_node):
     """Creates a QModelIndex pointing to the specified sequence component tree node.
@@ -157,6 +164,28 @@ class SequenceComponentTreeQtModel(QAbstractItemModel):
     """Checks whether there is currently an active project tree node and it represents a sequence."""
     return isinstance(self._project_tree_controller.active_node, SequenceProjectTreeNode)
   
+  def _node_name_changed(self, node, new_name, old_name):
+    """Should be called after a sequence component tree node has been renamed.
+    This method is meant to be invoked by a signal from the SequenceComponentTreeController.
+    node -- Sequence component tree node that has been renamed.
+    new_name -- New name to which the node was renamed.
+    old_name -- Old name from which the node was renamed.
+    """
+    qt_index = self.node_to_qt_index(node)
+    if qt_index.isValid():
+      self.dataChanged.emit(qt_index, qt_index, [QtCore.Qt.DisplayRole, QtCore.Qt.EditRole])
+  
+  def _node_component_type_changed(self, node, new_component_type, old_component_type):
+    """Should be called after a sequence component tree node has had its component type changed.
+    This method is meant to be invoked by a signal from the SequenceComponentNodeController.
+    node -- Sequence component tree node whose component type has changed.
+    new_component_type -- New component type that was assigned to the node.
+    old_component_type -- Component type that the node had before the change.
+    """
+    qt_index = self.node_to_qt_index(node)
+    if qt_index.isValid():
+      self.dataChanged.emit(qt_index, qt_index, [QtCore.Qt.DecorationRole])
+  
   def index(self, row, column, parent=QModelIndex()):
     if not self.hasIndex(row, column, parent):
       return QModelIndex()
@@ -224,8 +253,8 @@ class SequenceComponentTreeQtModel(QAbstractItemModel):
         
         # Rename the node.
         try:
-          self._undo_stack.push(RenameSequenceComponentTreeNodeCommand(self._seq_component_tree_controller,
-            self._project_tree_controller.active_node, node, value))
+          self._undo_stack.push(RenameSequenceComponentTreeNodeCommand(self._seq_component_tree_controller, node,
+            value))
           return True
         
         # Renaming may fail due to the name being invalid or unavailable.
@@ -322,8 +351,8 @@ class SequenceComponentTreeQtModel(QAbstractItemModel):
         
         node = self._project_tree_controller.active_node.root_seq_component_node.resolve_path(seq_component_tree_path)
         new_parent_node = self.qt_index_to_node(parent)
-        self._undo_stack.push(ReparentSequenceComponentTreeNodeCommand(self._seq_component_tree_controller,
-          self._project_tree_controller.active_node, node, new_parent_node))
+        self._undo_stack.push(ReparentSequenceComponentTreeNodeCommand(self._seq_component_tree_controller, node,
+          new_parent_node))
         return True
       
       except ValueError:

@@ -54,7 +54,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     seq_component_node_controller = SequenceComponentNodeController(self)
     project_tree_qt_model = ProjectTreeQtModel(project_tree_root, self._undo_stack, project_tree_controller, self)
     seq_component_tree_qt_model = SequenceComponentTreeQtModel(self._undo_stack, project_tree_controller,
-      seq_component_tree_controller, self)
+      seq_component_tree_controller, seq_component_node_controller, self)
     project_tree_controller.project_tree_qt_model = project_tree_qt_model
     project_tree_controller.seq_component_tree_qt_model = seq_component_tree_qt_model
     seq_component_tree_controller.seq_component_tree_qt_model = seq_component_tree_qt_model

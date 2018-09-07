@@ -27,6 +27,8 @@ class ProjectTreeQtModel(QAbstractItemModel):
     self._root_node = root_node
     self._undo_stack = undo_stack
     self._project_tree_controller = project_tree_controller
+    
+    project_tree_controller.node_renamed.connect(self._node_name_changed)
   
   def node_to_qt_index(self, node):
     """Creates a QModelIndex pointing to the specified node.
@@ -116,11 +118,16 @@ class ProjectTreeQtModel(QAbstractItemModel):
     new_parent_qt_index = self.node_to_qt_index(new_parent)
     return MoveNodeNotifier(self, node_qt_index, new_parent_qt_index, child_idx_after_reparent)
   
-  def _icon_for_node(self, node):
-    """Gets the QIcon that should be used to decorate the specified node.
-    node -- Node whose icon is to be obtained.
+  def _node_name_changed(self, node, new_name, old_name):
+    """Should be called after a project tree node has been renamed.
+    This method is meant to be invoked by a signal from the ProjectTreeController.
+    node -- Project tree node that has been renamed.
+    new_name -- New name to which the node was renamed.
+    old_name -- Old name from which the node was renamed.
     """
-    return node.__class__.get_icon()
+    qt_index = self.node_to_qt_index(node)
+    if qt_index.isValid():
+      self.dataChanged.emit(qt_index, qt_index, [QtCore.Qt.DisplayRole, QtCore.Qt.EditRole])
   
   def index(self, row, column, parent=QModelIndex()):
     if not self.hasIndex(row, column, parent):
@@ -167,7 +174,7 @@ class ProjectTreeQtModel(QAbstractItemModel):
           return node.name
         
         if role == QtCore.Qt.DecorationRole:
-          return self._icon_for_node(node)
+          return node.__class__.get_icon()
     
     # Return an invalid QVariant if the data could not be found.
     return QVariant()
