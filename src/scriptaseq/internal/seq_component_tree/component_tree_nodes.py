@@ -1,13 +1,27 @@
 """Defines a tree node type for a sequence component tree."""
 
 from PyQt5.Qt import QMenu, QCoreApplication
+from sortedcontainers.sorteddict import SortedDict
 
-from scriptaseq.internal.gui.undo_commands.seq_component_tree import DeleteSequenceComponentTreeNodeCommand,\
-  AddSequenceComponentTreeNodeCommand
-from scriptaseq.named_tree_node import NamedTreeNode
-from scriptaseq.internal.seq_component_tree.component_types import ContainerSequenceComponentType,\
-  SUPPORTED_COMPONENT_TYPES
 from scriptaseq.internal.gui.undo_commands.seq_component_node import SetComponentTypeCommand
+from scriptaseq.internal.gui.undo_commands.seq_component_tree import DeleteSequenceComponentTreeNodeCommand, \
+  AddSequenceComponentTreeNodeCommand
+from scriptaseq.internal.seq_component_tree.component_types import ContainerSequenceComponentType, \
+  SUPPORTED_COMPONENT_TYPES
+from scriptaseq.named_tree_node import NamedTreeNode
+
+
+class CustomSequenceComponentPropValue:
+  """Represents the value of a custom property attached to a sequence component tree node."""
+  
+  def __init__(self, value_str, is_expr=False):
+    """Constructor.
+    value_str -- Property value, as a string.
+    is_expr -- Indicates whether value_str should be interpreted as a Python expression (True) or as a raw string
+      (False).
+    """
+    self.value_str = value_str
+    self.is_expr = is_expr
 
 class SequenceComponentNode(NamedTreeNode):
   """Class for nodes in a sequence component tree."""
@@ -30,6 +44,7 @@ class SequenceComponentNode(NamedTreeNode):
     self.owning_project_tree_node = owning_project_tree_node
     self.component_type = component_type
     self.instanced_project_tree_node = instanced_project_tree_node
+    self.custom_props = SortedDict()
   
   def is_in_instance(self):
     """Checks whether this node is part of an instancing subtree."""

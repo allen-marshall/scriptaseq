@@ -1,5 +1,5 @@
 """Defines the widget class for displaying the sequence component tree."""
-from PyQt5.Qt import QWidget
+from PyQt5.Qt import QWidget, QModelIndex
 
 from scriptaseq.internal.generated.qt_ui.seq_component_tree_widget import Ui_SequenceComponentTreeWidget
 
@@ -24,10 +24,24 @@ class SequenceComponentTreeWidget(QWidget, Ui_SequenceComponentTreeWidget):
     
     self._undo_stack = undo_stack
     self._project_tree_controller = project_tree_controller
+    self._seq_component_tree_qt_model = seq_component_tree_qt_model
     self._seq_component_tree_controller = seq_component_tree_controller
     self._seq_component_node_controller = seq_component_node_controller
     
     self.seqComponentTreeView.setModel(seq_component_tree_qt_model)
+    
+    seq_component_tree_qt_model.modelReset.connect(lambda: self._current_selected_node_changed(QModelIndex()))
+    self.seqComponentTreeView.selectionModel().currentChanged.connect(
+      lambda new_qt_index, _: self._current_selected_node_changed(new_qt_index))
+  
+  def _current_selected_node_changed(self, new_qt_index):
+    """Should be called after the current selected node in the sequence component tree view has changed.
+    new_qt_index -- Qt index of the new current selected node. An invalid Qt index means there is no current selected
+      node.
+    """
+    new_active_node = None if not new_qt_index.isValid() \
+      else self._seq_component_tree_qt_model.qt_index_to_node(new_qt_index)
+    self._seq_component_tree_controller.active_node = new_active_node
   
   def contextMenuEvent(self, event):
     # Get event position relative to the sequence component tree view.

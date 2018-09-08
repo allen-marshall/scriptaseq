@@ -14,6 +14,12 @@ class SequenceComponentTreeController(QObject):
   should generally be called only from within subclasses of QUndoCommand.
   """
   
+  # Signal emitted when the active node in the sequence component tree has changed.
+  # Arguments:
+  # - Reference to the new active sequence component tree node, or None if there is no active sequence component tree
+  #   node.
+  active_node_changed = pyqtSignal(object)
+  
   # Signal emitted when a sequence component node has been added.
   # Arguments:
   # - Reference to the SequenceComponentNode that was added.
@@ -45,7 +51,10 @@ class SequenceComponentTreeController(QObject):
     """
     super().__init__(parent)
     
+    self._active_node = None
+    
     self._seq_component_tree_qt_model = None
+    self._seq_component_custom_props_qt_model = None
   
   @property
   def seq_component_tree_qt_model(self):
@@ -59,6 +68,36 @@ class SequenceComponentTreeController(QObject):
   @seq_component_tree_qt_model.setter
   def seq_component_tree_qt_model(self, seq_component_tree_qt_model):
     self._seq_component_tree_qt_model = seq_component_tree_qt_model
+  
+  @property
+  def seq_component_custom_props_qt_model(self):
+    """Property containing a reference to the application's SeqComponentCustomPropsQtModel.
+    This reference is needed because the SeqComponentCustomPropsQtModel has to be notified before certain changes take
+    place, and thus Qt signals are not sufficient to keep the SeqComponentCustomPropsQtModel up to date. It is
+    recommended that this property be set immediately once the application's SeqComponentCustomPropsQtModel has been
+    constructed.
+    """
+    return self._seq_component_custom_props_qt_model
+  
+  @seq_component_custom_props_qt_model.setter
+  def seq_component_custom_props_qt_model(self, seq_component_custom_props_qt_model):
+    self._seq_component_custom_props_qt_model = seq_component_custom_props_qt_model
+  
+  @property
+  def active_node(self):
+    """Property containing a reference to the active sequence component tree node.
+    A value of None means there is no active sequence component tree node.
+    """
+    return self._active_node
+  
+  @active_node.setter
+  def active_node(self, active_node):
+    # Notify the SequenceComponentCustomPropsQtModel before and after the change.
+    with self.seq_component_custom_props_qt_model.begin_change_active_seq_component_tree_node():
+      self._active_node = active_node
+    
+    # Send out appropriate signals to notify other GUI components.
+    self.active_node_changed.emit(active_node)
   
   def add_node(self, node, parent):
     """Adds a node to a sequence component tree.
@@ -88,6 +127,10 @@ class SequenceComponentTreeController(QObject):
     if node.parent is None:
       raise ValueError(
         QCoreApplication.translate('SequenceComponentTreeController', 'Cannot delete root node from the sequence component tree.'))
+    
+    # Reset the active node first, if it or one of its ancestors is being deleted.
+    if self.active_node is not None and (node is self.active_node or node in self.active_node.ancestors):
+      self.active_node = None
     
     parent_node = node.parent
     
