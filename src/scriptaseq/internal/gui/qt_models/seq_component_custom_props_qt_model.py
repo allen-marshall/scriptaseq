@@ -49,7 +49,7 @@ class SequenceComponentCustomPropsQtModel(QAbstractTableModel):
     if self._seq_component_tree_controller.active_node is None:
       return 0
     
-    return len(self._seq_component_tree_controller.active_node.custom_props)
+    return len(self._seq_component_tree_controller.active_node.custom_prop_names)
   
   def columnCount(self, parent=QModelIndex()):
     # Don't allow hierarchy since this is a table model.
@@ -61,13 +61,15 @@ class SequenceComponentCustomPropsQtModel(QAbstractTableModel):
   def data(self, index, role=QtCore.Qt.DisplayRole):
     if index.isValid() and self._seq_component_tree_controller.active_node is not None:
       if role == QtCore.Qt.DisplayRole:
-        prop_entry = self._seq_component_tree_controller.active_node.custom_props.peekitem(index.row())
+        prop_name = self._seq_component_tree_controller.active_node.custom_prop_names[index.row()]
+        prop_value = self._seq_component_tree_controller.active_node.get_custom_prop(prop_name)
+        
         if index.column() == SequenceComponentCustomPropsQtModel._NAME_COLUMN:
-          return prop_entry[0]
+          return prop_name
         elif index.column() == SequenceComponentCustomPropsQtModel._VALUE_COLUMN:
-          return prop_entry[1].value_str
+          return prop_value.value_str
         elif index.column() == SequenceComponentCustomPropsQtModel._EVAL_COLUMN:
-          return prop_entry[1].is_expr
+          return prop_value.is_expr
     
     # Return an invalid QVariant if the data could not be found.
     return QVariant()

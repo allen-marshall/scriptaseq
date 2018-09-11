@@ -14,7 +14,7 @@ from scriptaseq.internal.project_change_controllers.project_tree_controller impo
 from scriptaseq.internal.project_change_controllers.seq_component_node_controller import SequenceComponentNodeController
 from scriptaseq.internal.project_change_controllers.seq_component_tree_controller import SequenceComponentTreeController
 from scriptaseq.internal.project_tree.project_tree_nodes import DirProjectTreeNode, SequenceProjectTreeNode
-from scriptaseq.internal.seq_component_tree.component_tree_nodes import SequenceComponentNode, \
+from scriptaseq.internal.seq_component_tree.component_tree_nodes import NonInstancedSequenceComponentNode, \
   CustomSequenceComponentPropValue
 from scriptaseq.internal.seq_component_tree.component_types import NoteSequenceComponentType, \
   AutomationSequenceComponentType, WaveTableSequenceComponentType
@@ -44,15 +44,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     child_dir_0 = DirProjectTreeNode('childDir0', project_tree_root)
     DirProjectTreeNode('childDir1', project_tree_root)
     grandchild_seq = SequenceProjectTreeNode('grandchildSequence', child_dir_0)
-    child_note = SequenceComponentNode('childNote', grandchild_seq, component_type=NoteSequenceComponentType)
+    child_note = NonInstancedSequenceComponentNode('childNote', grandchild_seq, component_type=NoteSequenceComponentType)
     child_note.parent = grandchild_seq.root_seq_component_node
-    SequenceComponentNode('childAutomation', grandchild_seq, component_type=AutomationSequenceComponentType).parent = \
+    NonInstancedSequenceComponentNode('childAutomation', grandchild_seq, component_type=AutomationSequenceComponentType).parent = \
       grandchild_seq.root_seq_component_node
-    SequenceComponentNode('childWaveTable', grandchild_seq, component_type=WaveTableSequenceComponentType).parent = \
+    NonInstancedSequenceComponentNode('childWaveTable', grandchild_seq, component_type=WaveTableSequenceComponentType).parent = \
       grandchild_seq.root_seq_component_node
-    child_note.custom_props['prop0'] = CustomSequenceComponentPropValue('val0', False)
-    child_note.custom_props['prop1'] = CustomSequenceComponentPropValue('[1, 2]', True)
-    child_note.custom_props['prop2'] = CustomSequenceComponentPropValue('val2', False)
+    child_note.set_custom_prop('prop0', CustomSequenceComponentPropValue('val0', False))
+    child_note.set_custom_prop('prop1', CustomSequenceComponentPropValue('[1, 2]', True))
+    child_note.set_custom_prop('prop2', CustomSequenceComponentPropValue('val2', False))
     
     # Set up project change controllers.
     project_tree_controller = ProjectTreeController(self)

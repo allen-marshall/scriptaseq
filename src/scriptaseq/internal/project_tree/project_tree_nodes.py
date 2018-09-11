@@ -5,7 +5,7 @@ from PyQt5.Qt import QIcon, QMenu, QCoreApplication
 from scriptaseq.internal.gui.qt_util import make_multires_icon
 from scriptaseq.internal.gui.undo_commands.project_tree import DeleteProjectTreeNodeCommand, AddProjectTreeNodeCommand
 from scriptaseq.named_tree_node import NamedTreeNode
-from scriptaseq.internal.seq_component_tree.component_tree_nodes import SequenceComponentNode
+from scriptaseq.internal.seq_component_tree.component_tree_nodes import NonInstancedSequenceComponentNode
 
 # Name prefix to use for default directory node names.
 _DIR_NODE_NAME_PREFIX = 'dir'
@@ -97,8 +97,8 @@ class SequenceProjectTreeNode(BaseProjectTreeNode):
     """
     super().__init__(name, False, parent)
     
-    self.root_seq_component_node = SequenceComponentNode(_ROOT_SEQUENCE_COMPONENT_NODE_NAME,
-      owning_project_tree_node=self)
+    self.root_seq_component_node = NonInstancedSequenceComponentNode(_ROOT_SEQUENCE_COMPONENT_NODE_NAME,
+      tree_owner=self)
   
   @classmethod
   def make_icon(cls):

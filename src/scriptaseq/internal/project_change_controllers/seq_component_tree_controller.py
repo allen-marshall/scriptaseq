@@ -2,7 +2,7 @@
 
 from PyQt5.Qt import QObject, pyqtSignal, QCoreApplication
 
-from scriptaseq.internal.seq_component_tree.component_tree_nodes import SequenceComponentNode
+from scriptaseq.internal.seq_component_tree.component_tree_nodes import BaseSequenceComponentNode
 from scriptaseq.named_tree_node import NamedTreeNode
 
 
@@ -22,28 +22,28 @@ class SequenceComponentTreeController(QObject):
   
   # Signal emitted when a sequence component node has been added.
   # Arguments:
-  # - Reference to the SequenceComponentNode that was added.
-  node_added = pyqtSignal(SequenceComponentNode)
+  # - Reference to the BaseSequenceComponentNode that was added.
+  node_added = pyqtSignal(BaseSequenceComponentNode)
   
   # Signal emitted when a sequence component node has been deleted.
   # Arguments:
-  # - Reference to the SequenceComponentNode that was deleted.
+  # - Reference to the BaseSequenceComponentNode that was deleted.
   # - Reference to the former parent of the node that was deleted.
-  node_deleted = pyqtSignal(SequenceComponentNode, SequenceComponentNode)
+  node_deleted = pyqtSignal(BaseSequenceComponentNode, BaseSequenceComponentNode)
   
   # Signal emitted when a sequence component node has been renamed.
   # Arguments:
-  # - Reference to the SequenceComponentNode that was renamed.
+  # - Reference to the BaseSequenceComponentNode that was renamed.
   # - String containing the new name.
   # - String containing the old name.
-  node_renamed = pyqtSignal(SequenceComponentNode, str, str)
+  node_renamed = pyqtSignal(BaseSequenceComponentNode, str, str)
   
   # Signal emitted when a sequence component node has been reparented.
   # Arguments:
-  # - Reference to the SequenceComponentNode that was reparented.
+  # - Reference to the BaseSequenceComponentNode that was reparented.
   # - Reference to the new parent to which the node was added.
   # - Reference to the old parent from which the node was removed.
-  node_reparented = pyqtSignal(SequenceComponentNode, SequenceComponentNode, SequenceComponentNode)
+  node_reparented = pyqtSignal(BaseSequenceComponentNode, BaseSequenceComponentNode, BaseSequenceComponentNode)
   
   def __init__(self, parent=None):
     """Constructor.
@@ -105,10 +105,10 @@ class SequenceComponentTreeController(QObject):
     node -- New sequence component tree node to add.
     parent -- Parent to which the new node will be added.
     """
-    if node.parent is not None or node is node.owning_project_tree_node.root_seq_component_node:
+    if node.parent is not None or node is node.tree_owner.root_seq_component_node:
       raise ValueError(
         QCoreApplication.translate('SequenceComponentTreeController', 'Cannot add a node that already exists in the sequence component tree.'))
-    if node.owning_project_tree_node is not parent.owning_project_tree_node:
+    if node.tree_owner is not parent.tree_owner:
       raise ValueError(
         QCoreApplication.translate('SequenceComponentTreeController', "Cannot mix sequence component nodes from different project tree nodes."))
     

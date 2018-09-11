@@ -49,7 +49,7 @@ class SequenceComponentTreeQtModel(QAbstractItemModel):
     seq_component_tree_node -- Sequence component tree node to which the QModelIndex should refer.
     """
     # Return an invalid index for nodes that do not belong to the active project tree node.
-    if self._project_tree_controller.active_node is not seq_component_tree_node.owning_project_tree_node:
+    if self._project_tree_controller.active_node is not seq_component_tree_node.tree_owner:
       return QModelIndex()
     
     row = 0 if seq_component_tree_node.parent is None else seq_component_tree_node.idx_in_parent()
@@ -83,13 +83,13 @@ class SequenceComponentTreeQtModel(QAbstractItemModel):
     node_to_add -- Sequence component tree node to be added.
     parent -- Parent to which the node will be added.
     """
-    if node_to_add.parent is not None or node_to_add is node_to_add.owning_project_tree_node.root_seq_component_node:
+    if node_to_add.parent is not None or node_to_add is node_to_add.tree_owner.root_seq_component_node:
       raise ValueError(
         QCoreApplication.translate('SequenceComponentTreeQtModel', 'Cannot add a node that already exists in the sequence component tree.'))
     
     # No special operations are required if the sequence component tree being modified is not the one this Qt model is
     # showing.
-    if self._project_tree_controller.active_node is not node_to_add.owning_project_tree_node:
+    if self._project_tree_controller.active_node is not node_to_add.tree_owner:
       return DoNothingNotifier()
     
     return AddNodeNotifier(self, self.node_to_qt_index(parent), parent.child_idx_from_name(node_to_add.name))
@@ -108,7 +108,7 @@ class SequenceComponentTreeQtModel(QAbstractItemModel):
     
     # No special operations are required if the sequence component tree being modified is not the one this Qt model is
     # showing.
-    if self._project_tree_controller.active_node is not node_to_delete.owning_project_tree_node:
+    if self._project_tree_controller.active_node is not node_to_delete.tree_owner:
       return DoNothingNotifier()
     
     return DeleteNodeNotifier(self, self.node_to_qt_index(node_to_delete))
@@ -123,7 +123,7 @@ class SequenceComponentTreeQtModel(QAbstractItemModel):
     """
     # No special operations are required if the sequence component tree being modified is not the one this Qt model is
     # showing.
-    if self._project_tree_controller.active_node is not node_to_rename.owning_project_tree_node:
+    if self._project_tree_controller.active_node is not node_to_rename.tree_owner:
       return DoNothingNotifier()
     
     # Determine what the node's child index will be after the rename.
@@ -150,7 +150,7 @@ class SequenceComponentTreeQtModel(QAbstractItemModel):
     
     # No special operations are required if the sequence component tree being modified is not the one this Qt model is
     # showing.
-    if self._project_tree_controller.active_node is not node_to_reparent.owning_project_tree_node:
+    if self._project_tree_controller.active_node is not node_to_reparent.tree_owner:
       return DoNothingNotifier()
     
     # Determine what the node's child index will be after the operation.

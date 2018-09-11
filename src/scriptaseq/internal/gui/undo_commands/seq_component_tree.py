@@ -29,8 +29,8 @@ class AddSequenceComponentTreeNodeCommand(BaseSequenceComponentTreeUndoCommand):
     Raises ValueError if it is determined that the addition operation would fail.
     seq_component_tree_controller -- Reference to the SequenceComponentTreeController in charge of making high-level
       changes to the sequence component tree.
-    node -- New SequenceComponentNode to add.
-    parent_node -- Parent SequenceComponentNode to which the new node will be added.
+    node -- New BaseSequenceComponentNode to add.
+    parent_node -- Parent BaseSequenceComponentNode to which the new node will be added.
     parent -- Parent QUndoCommand.
     """    
     super().__init__(seq_component_tree_controller, parent)
@@ -61,7 +61,7 @@ class DeleteSequenceComponentTreeNodeCommand(BaseSequenceComponentTreeUndoComman
     Raises ValueError if it is determined that the deletion operation would fail.
     seq_component_tree_controller -- Reference to the SequenceComponentTreeController in charge of making high-level
       changes to the sequence component tree.
-    node -- SequenceComponentNode to delete.
+    node -- BaseSequenceComponentNode to delete.
     parent -- Parent QUndoCommand.
     """    
     super().__init__(seq_component_tree_controller, parent)
@@ -91,8 +91,8 @@ class RenameSequenceComponentTreeNodeCommand(BaseSequenceComponentTreeUndoComman
     Raises ValueError if it is determined that the rename operation would fail.
     seq_component_tree_controller -- Reference to the SequenceComponentTreeController in charge of making high-level
       changes to the sequence component tree.
-    node -- SequenceComponentNode to rename.
-    new_name -- New name for the SequenceComponentNode.
+    node -- BaseSequenceComponentNode to rename.
+    new_name -- New name for the BaseSequenceComponentNode.
     parent -- Parent QUndoCommand.
     """    
     super().__init__(seq_component_tree_controller, parent)
@@ -128,8 +128,8 @@ class ReparentSequenceComponentTreeNodeCommand(BaseSequenceComponentTreeUndoComm
     Raises ValueError if it is determined that the reparent operation would fail.
     seq_component_tree_controller -- Reference to the SequenceComponentTreeController in charge of making high-level
       changes to the sequence component tree.
-    node -- SequenceComponentNode to reparent.
-    new_parent -- New parent node for the SequenceComponentNode.
+    node -- BaseSequenceComponentNode to reparent.
+    new_parent -- New parent node for the BaseSequenceComponentNode.
     parent -- Parent QUndoCommand.
     """    
     super().__init__(seq_component_tree_controller, parent)

@@ -2,7 +2,7 @@
 
 from PyQt5.Qt import QObject, pyqtSignal
 
-from scriptaseq.internal.seq_component_tree.component_tree_nodes import SequenceComponentNode
+from scriptaseq.internal.seq_component_tree.component_tree_nodes import BaseSequenceComponentNode
 
 
 class SequenceComponentNodeController(QObject):
@@ -13,10 +13,10 @@ class SequenceComponentNodeController(QObject):
   
   # Signal emitted when a sequence component node's component type has been changed.
   # Arguments:
-  # - Reference to the SequenceComponentNode whose component type has been changed.
+  # - Reference to the BaseSequenceComponentNode whose component type has been changed.
   # - BaseSequenceComponentType subclass representing the new component type.
   # - BaseSequenceComponentType subclass representing the old component type.
-  node_component_type_changed = pyqtSignal(SequenceComponentNode, type, type)
+  node_component_type_changed = pyqtSignal(BaseSequenceComponentNode, type, type)
   
   def set_component_type(self, node, new_component_type):
     """Sets the component type for a sequence component tree node.
